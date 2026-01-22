@@ -22,13 +22,14 @@ public class TrainController : MonoBehaviour
         _rotationOffset = Quaternion.Inverse(Quaternion.LookRotation(Vector3.forward, Vector3.up)) * transform.rotation;
         _targetRot = transform.rotation;
     }
-
+    
     private void Start()
     {
-        int neededHistory = initialSpawnedCars * gap + 1;
-        for (int i = 0; i < neededHistory; i++)
+        // Pre-populate positionsHistory with variable gaps
+        int totalHistory = 100 + (initialSpawnedCars - 1) * gap + 1;
+        for (int i = 0; i < totalHistory; i++)
         {
-            positionsHistory.Add(transform.position);
+            positionsHistory.Add(transform.position - _moveDir * i);
         }
 
         for (int i = 0; i < initialSpawnedCars; i++)
@@ -36,7 +37,6 @@ public class TrainController : MonoBehaviour
             GrowTrain();
         }
     }
-
 
     private void Update()
     {
@@ -73,9 +73,13 @@ public class TrainController : MonoBehaviour
 
         // move train cars
         int index = 0;
+        int accumulatedGap = 0;
         foreach (var car in trainCars)
         {
-            Vector3 point = positionsHistory[Mathf.Min(index * gap, positionsHistory.Count - 1)];
+            int thisGap = (index == 0) ? 100 : gap;
+            accumulatedGap += thisGap;
+            int historyIndex = Mathf.Min(accumulatedGap, positionsHistory.Count - 1);
+            Vector3 point = positionsHistory[historyIndex];
             Vector3 moveDirection = point - car.transform.position;
             car.transform.position += moveDirection * moveSpeed * Time.deltaTime;
 

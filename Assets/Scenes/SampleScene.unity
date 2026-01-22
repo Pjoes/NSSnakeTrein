@@ -138,8 +138,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 20
   turnSpeed: 180
-  gap: 100
-  initialSpawnedCars: 2
+  gap: 75
+  initialSpawnedCars: 3
   trainCar: {fileID: 7567680426112825224, guid: 9a3d8b7653cb8eb409f8713cc4948b49, type: 3}
 --- !u!1 &330585543
 GameObject:
