@@ -581,7 +581,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3298370550135611439, guid: 2785a34f346d8ce449dcab05a44de515, type: 3}
       propertyPath: gap
-      value: 150
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 3298370550135611439, guid: 2785a34f346d8ce449dcab05a44de515, type: 3}
       propertyPath: trainCar

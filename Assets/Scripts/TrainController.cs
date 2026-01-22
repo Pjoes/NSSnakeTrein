@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider))]
@@ -5,15 +6,21 @@ public class TrainController : MonoBehaviour
 {
     public Vector3 direction = Vector3.forward;
 
+    [SerializeField] private GameObject carPrefab;
     [SerializeField] private float speed = 20f;
     [SerializeField] private float speedMultiplier = 1f;
     [SerializeField] private float rotationSpeed = 5f;
     [SerializeField] private float trainY = 10.18f;
+    [SerializeField] private float carSpacing = 1f;
     [SerializeField] private float turnCooldown = 0.2f;
 
     private Vector3 nextDirection;
     private Quaternion targetRotation;
     private float lastTurnTime;
+
+    private List<GameObject> cars = new List<GameObject>();
+    private List<Vector3> positionsHistory = new List<Vector3>();
+    private List<Quaternion> rotationsHistory = new List<Quaternion>();
 
     private readonly Quaternion forwardRotation = Quaternion.identity;
     private readonly Quaternion backRotation = Quaternion.Euler(0, 180, 0);
@@ -26,6 +33,10 @@ public class TrainController : MonoBehaviour
         targetRotation = forwardRotation;
         lastTurnTime = -turnCooldown;
         transform.position = new Vector3(transform.position.x, trainY, transform.position.z);
+
+        GrowTrain();
+        GrowTrain();
+        GrowTrain();
     }
 
     private void Update()
@@ -83,6 +94,27 @@ public class TrainController : MonoBehaviour
         Vector3 pos = transform.position;
         pos.y = 10.18f;
         transform.position = pos;
+
+        // Store current position and rotation
+        positionsHistory.Insert(0, transform.position);
+        rotationsHistory.Insert(0, transform.rotation);
+
+        // Update each car to follow at its respective distance
+        for (int i = 0; i < cars.Count; i++)
+        {
+            int historyIndex = Mathf.Min(i * 30 + 5, positionsHistory.Count - 1); // First car is 5 frames back, then 30 apart
+            Vector3 carPos = positionsHistory[historyIndex];
+            carPos.y = trainY;
+            cars[i].transform.position = carPos;
+            cars[i].transform.rotation = rotationsHistory[historyIndex];
+        }
+
+        // Clean up old history to avoid memory issues
+        if (positionsHistory.Count > 1000)
+        {
+            positionsHistory.RemoveAt(positionsHistory.Count - 1);
+            rotationsHistory.RemoveAt(rotationsHistory.Count - 1);
+        }
     }
 
     private void RotateToDirection(Vector3 dir)
@@ -95,5 +127,11 @@ public class TrainController : MonoBehaviour
             targetRotation = leftRotation;
         else // Vector3.right
             targetRotation = rightRotation;
+    }
+
+    private void GrowTrain()
+    {
+        GameObject car = Instantiate(carPrefab);
+        cars.Add(car);
     }
 }
