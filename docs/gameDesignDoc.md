@@ -40,9 +40,7 @@ Het spel zou dusdanig plaatsvinden in een omgeving als bijvoorbeeld de woestijn 
 
 ## Gameplay
 
-Aangezien de gameplay geïnspireerd moet zijn door de game *Snake*, is de gameplay al vrij bekend. De speler bestuurt een trein die begint met een enkele wagon, maar groeit naarmate er meer groepjes passagiers worden opgepakt. De trein kan in een bepaalde omgeving bewegen en bestuurd worden met WASD of de pijltjestoetsen. Daarnaast is het ook zo dat het oorspronkelijke spel altijd op een grid plaatsvindt (de slang kan alleen maar in exacte hoeken bewegen en draait altijd 90 graden), dat zal ik ook implementeren.
-
-De trein stopt nooit met bewegen, tenzij deze een eigen wagon raakt of een ander obstakel. Dit betekent dat er niet altijd een knop ingedrukt moet blijven, maar de speler enkel de richting kan bepalen met WASD of de pijltjestoetsen. (W - omhoog, A - naar links, S - omlaag, D - naar rechts)
+Aangezien de gameplay geïnspireerd moet zijn door de game *Snake*, is de gameplay al vrij bekend. De speler bestuurt een trein die begint met een enkele wagon, maar groeit naarmate er meer groepjes passagiers worden opgepakt. De trein kan in een bepaalde omgeving bewegen en bestuurd worden met WASD of de pijltjestoetsen. Daarnaast is het ook zo dat het oorspronkelijke spel altijd op een grid plaatsvindt (de slang kan alleen maar in exacte hoeken bewegen en draait altijd 90 graden), echter ik maak het zo dat de trein bestuurd kan worden met A en D of de bijbehorende pijltjestoetsen, zodat de speler meer vrijheid heeft.
 
 Daarnaast zullen er ook power-ups in de game komen om de ervaring van de speler wat leuker te maken. Hier ga ik verder op in. Hetzelfde geldt voor de vijanden. (De oorspronkelijke *Snake* heeft uiteraard geen vijanden en de speler moet alleen zijn eigen lichaam en de muren vermijden.) 
 
