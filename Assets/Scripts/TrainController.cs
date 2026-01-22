@@ -1,100 +1,99 @@
-using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(BoxCollider))]
 public class TrainController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 20f;
-    [SerializeField] private float turnSpeed = 360f; // turn slowly instead of snapping
-    [SerializeField] private int gap = 75;
-    [SerializeField] private int initialSpawnedCars = 2;
+    public Vector3 direction = Vector3.forward;
 
-    private Vector3 _moveDir = Vector3.forward;
-    private Quaternion _rotationOffset;
-    private Quaternion _targetRot;
+    [SerializeField] private float speed = 20f;
+    [SerializeField] private float speedMultiplier = 1f;
+    [SerializeField] private float rotationSpeed = 5f;
+    [SerializeField] private float trainY = 10.18f;
+    [SerializeField] private float turnCooldown = 0.2f;
 
-    public GameObject trainCar;
-    private List<GameObject> trainCars = new List<GameObject>();
-    private List<Vector3> positionsHistory = new List<Vector3>();
+    private Vector3 nextDirection;
+    private Quaternion targetRotation;
+    private float lastTurnTime;
 
-    private void Awake()
-    {
-        // model is messed up, so calculate an offset to keep it upright
-        _rotationOffset = Quaternion.Inverse(Quaternion.LookRotation(Vector3.forward, Vector3.up)) * transform.rotation;
-        _targetRot = transform.rotation;
-    }
-    
+    private readonly Quaternion forwardRotation = Quaternion.identity;
+    private readonly Quaternion backRotation = Quaternion.Euler(0, 180, 0);
+    private readonly Quaternion leftRotation = Quaternion.Euler(0, 270, 0);
+    private readonly Quaternion rightRotation = Quaternion.Euler(0, 90, 0);
+
     private void Start()
     {
-        // Pre-populate positionsHistory with variable gaps
-        int totalHistory = 100 + (initialSpawnedCars - 1) * gap + 1;
-        for (int i = 0; i < totalHistory; i++)
-        {
-            positionsHistory.Add(transform.position - _moveDir * i);
-        }
-
-        for (int i = 0; i < initialSpawnedCars; i++)
-        {
-            GrowTrain();
-        }
+        nextDirection = direction;
+        targetRotation = forwardRotation;
+        lastTurnTime = -turnCooldown;
+        transform.position = new Vector3(transform.position.x, trainY, transform.position.z);
     }
 
     private void Update()
     {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        if (Time.time < lastTurnTime + turnCooldown)
+            return;
 
-        // only allow 90 degree turns
-        if (Mathf.Abs(_moveDir.z) > 0.001f)
+        // Only allow turning left/right while moving forward/backward
+        if (direction == Vector3.forward || direction == Vector3.back)
         {
-            // if moving up/down, allow left/right turn
-            if (Mathf.Abs(h) > 0.1f)
+            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                _moveDir = new Vector3(Mathf.Sign(h), 0f, 0f);
-                _targetRot = Quaternion.LookRotation(_moveDir, Vector3.up) * _rotationOffset;
+                nextDirection = Vector3.left;
+                lastTurnTime = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                nextDirection = Vector3.right;
+                lastTurnTime = Time.time;
             }
         }
-        else if (Mathf.Abs(_moveDir.x) > 0.001f)
+        // Only allow turning forward/backward while moving left/right
+        else if (direction == Vector3.left || direction == Vector3.right)
         {
-            // if moving left/right, allow up/down turn
-            if (Mathf.Abs(v) > 0.1f)
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
-                _moveDir = new Vector3(0f, 0f, Mathf.Sign(v));
-                _targetRot = Quaternion.LookRotation(_moveDir, Vector3.up) * _rotationOffset;
+                nextDirection = Vector3.forward;
+                lastTurnTime = Time.time;
             }
-        }
-
-        transform.position += _moveDir * moveSpeed * Time.deltaTime;
-
-        // smoothly rotate like a real train
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, _targetRot, turnSpeed * Time.deltaTime);
-
-        // store locomotive position history
-        positionsHistory.Insert(0, transform.position);
-
-        // move train cars
-        int index = 0;
-        int accumulatedGap = 0;
-        foreach (var car in trainCars)
-        {
-            int thisGap = (index == 0) ? 100 : gap;
-            accumulatedGap += thisGap;
-            int historyIndex = Mathf.Min(accumulatedGap, positionsHistory.Count - 1);
-            Vector3 point = positionsHistory[historyIndex];
-            Vector3 moveDirection = point - car.transform.position;
-            car.transform.position += moveDirection * moveSpeed * Time.deltaTime;
-
-            car.transform.LookAt(point);
-            Vector3 euler = car.transform.eulerAngles;
-            car.transform.rotation = Quaternion.Euler(-90f, euler.y, euler.z);
-
-            index++;
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                nextDirection = Vector3.back;
+                lastTurnTime = Time.time;
+            }
         }
     }
 
-    private void GrowTrain()
+    private void FixedUpdate()
     {
-        GameObject car = Instantiate(trainCar);
-        trainCars.Add(car);
-        Debug.Log("Growing train!");
+        // Update direction and set target rotation if it changed
+        if (nextDirection != direction)
+        {
+            direction = nextDirection;
+            RotateToDirection(direction);
+        }
+
+        // Smoothly rotate towards target
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
+
+        // Move smoothly based on time
+        float moveDistance = (speed * speedMultiplier) * Time.fixedDeltaTime;
+        transform.position += direction * moveDistance;
+
+        // Keep y at 10.18
+        Vector3 pos = transform.position;
+        pos.y = 10.18f;
+        transform.position = pos;
+    }
+
+    private void RotateToDirection(Vector3 dir)
+    {
+        if (dir == Vector3.forward)
+            targetRotation = forwardRotation;
+        else if (dir == Vector3.back)
+            targetRotation = backRotation;
+        else if (dir == Vector3.left)
+            targetRotation = leftRotation;
+        else // Vector3.right
+            targetRotation = rightRotation;
     }
 }
