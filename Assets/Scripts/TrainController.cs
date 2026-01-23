@@ -6,14 +6,14 @@ public class TrainController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 20f;
     [SerializeField] private float steerSpeed = 180f;
-    [SerializeField] private float carFollowSpeed = 15f;
     [SerializeField] private int gap = 10;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
-    [SerializeField] private GameObject carPrefab;
+    [SerializeField] private GameObject carPrefab, passengersPrefab;
 
     private List<GameObject> cars = new List<GameObject>();
     private List<Vector3> positionsHistory = new List<Vector3>();
+    private List<Quaternion> rotationHistory = new List<Quaternion>();
 
     private int score = 0;
     private float lastFoodTime = -1f;
@@ -26,6 +26,7 @@ public class TrainController : MonoBehaviour
         for (int i = 0; i < firstCarGap + (initialCars * gap); i++)
         {
             positionsHistory.Add(transform.position);
+            rotationHistory.Add(transform.rotation);
         }
 
         for (int i = 0; i < initialCars; i++)
@@ -45,6 +46,7 @@ public class TrainController : MonoBehaviour
 
         // Store position history
         positionsHistory.Insert(0, transform.position);
+        rotationHistory.Insert(0, transform.rotation);
 
         // Move cars
         int index = 0;
@@ -63,18 +65,14 @@ public class TrainController : MonoBehaviour
 
             Vector3 point = positionsHistory[historyIndex];
 
-            // Move car directly to the point with minimal interpolation for tighter following
+            // Place car exactly at the recorded path point for tight spacing
             Vector3 moveDirection = point - car.transform.position;
-            float distance = moveDirection.magnitude;
+            car.transform.position = point;
 
-            // Use higher speed when further away to catch up faster
-            float dynamicSpeed = carFollowSpeed * (1f + distance * 0.5f);
-            car.transform.position += moveDirection.normalized * Mathf.Min(dynamicSpeed * Time.deltaTime, distance);
-
-            // Rotate car towards the point along the train's path
-            if (moveDirection.magnitude > 0.01f)
+            // Rotate car using the head's recorded rotation at the same path index
+            if (rotationHistory.Count > historyIndex)
             {
-                car.transform.LookAt(point);
+                car.transform.rotation = rotationHistory[historyIndex];
             }
 
             index++;
@@ -89,7 +87,7 @@ public class TrainController : MonoBehaviour
 
         // Get spawn position and rotation from history
         Vector3 spawnPos = positionsHistory.Count > historyIndex ? positionsHistory[historyIndex] : transform.position;
-        Quaternion spawnRot = Quaternion.identity;
+        Quaternion spawnRot = rotationHistory.Count > historyIndex ? rotationHistory[historyIndex] : transform.rotation;
 
         GameObject car = Instantiate(carPrefab, spawnPos, spawnRot);
         cars.Add(car);
@@ -97,13 +95,16 @@ public class TrainController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Food") && Time.time - lastFoodTime > 0.1f)
+        if (other.gameObject.CompareTag("Passengers") && Time.time - lastFoodTime > 0.1f)
         {
-            Debug.Log("Food!");
             GrowTrain();
             score += 10;
-            Debug.Log(score);
             Destroy(other.gameObject);
+            ObjectsSpawner spawner = FindFirstObjectByType<ObjectsSpawner>();
+            if (spawner != null)
+            {
+                spawner.SpawnObject(passengersPrefab);
+            }
             lastFoodTime = Time.time;
         }
         else if (other.gameObject.CompareTag("Obstacle"))
