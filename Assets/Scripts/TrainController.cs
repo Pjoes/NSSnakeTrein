@@ -11,6 +11,7 @@ public class TrainController : MonoBehaviour
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
     [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
+    [SerializeField] private string passengersTag = "Passengers", obstacleTag = "Obstacle", carTag = "Car";
 
     private ScoreManager _scoreManager;
 
@@ -85,6 +86,7 @@ public class TrainController : MonoBehaviour
         return Mathf.Clamp(rawIndex, 0, positionsHistory.Count - 1);
     }
 
+    // Increase train size by adding a new car to the end
     private void GrowTrain()
     {
         int newCarIndex = cars.Count;
@@ -104,6 +106,7 @@ public class TrainController : MonoBehaviour
         gap -= gapDecreaseAmount;
     }
 
+    // Display game over screen and pause the game
     private void GameOver()
     {
         isGameOver = true;
@@ -112,13 +115,14 @@ public class TrainController : MonoBehaviour
         gameOverScreen.SetActive(true);
 
         Cursor.lockState = CursorLockMode.None;
-        Time.timeScale = 0f; // Pause the game
+        Time.timeScale = 0f;
     }
 
+    // Check for collisions with passengers and obstacles
     private void OnTriggerEnter(Collider other)
     {
         // Increase train length and score when picking up passengers
-        if (other.gameObject.CompareTag("Passengers") && Time.time - lastFoodTime > 0.1f)
+        if (other.gameObject.CompareTag(passengersTag) && Time.time - lastFoodTime > 0.1f)
         {
             GrowTrain();
             _scoreManager.AddScore(scorePerPassenger);
@@ -132,7 +136,7 @@ public class TrainController : MonoBehaviour
             }
             lastFoodTime = Time.time;
         }
-        else if (other.gameObject.CompareTag("Obstacle"))
+        if (other.gameObject.CompareTag(obstacleTag) || other.gameObject.CompareTag(carTag))
         {
             Debug.Log("Hit Obstacle! Game Over.");
             GameOver();

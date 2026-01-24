@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Obstacle
   - Passengers
+  - Car
   layers:
   - Default
   - TransparentFX
