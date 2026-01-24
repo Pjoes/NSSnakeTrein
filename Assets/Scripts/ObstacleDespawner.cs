@@ -3,7 +3,7 @@ using System.Collections;
 
 public class ObstacleDespawner : MonoBehaviour
 {
-    [SerializeField] private float despawnTime = 5f;
+    private float maxDespawnTime = 5f, minDespawnTime = 3f;
 
     void Start()
     {
@@ -12,6 +12,7 @@ public class ObstacleDespawner : MonoBehaviour
 
     private IEnumerator DespawnObject()
     {
+        float despawnTime = Random.Range(minDespawnTime, maxDespawnTime);
         yield return new WaitForSeconds(despawnTime);
         Destroy(gameObject);
     }

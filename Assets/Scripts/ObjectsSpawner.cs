@@ -3,10 +3,14 @@ using UnityEngine;
 
 public class ObjectsSpawner : MonoBehaviour
 {
+    public int objectsToSpawn = 1;
+
     [SerializeField] private float minX, maxX, minZ, maxZ;
+    [SerializeField] private float obstacleSpawnTime = 3f;
+    [SerializeField] private float minObstacleSpawnTime = 0.5f;
     [SerializeField] private float defaultY = 12f;
     [SerializeField] private int initialObstacleCount = 3;
-    [SerializeField] private GameObject obstaclePrefab;
+    [SerializeField] private GameObject passengersPrefab, obstaclePrefab;
     [SerializeField] private float minDistanceFromTrain = 20f;
 
     private TrainController trainController;
@@ -14,6 +18,8 @@ public class ObjectsSpawner : MonoBehaviour
     // Spawn a few obstacles at the start before starting the coroutine
     private void Start()
     {
+        SpawnObject(passengersPrefab);
+
         trainController = FindFirstObjectByType<TrainController>();
         if (trainController == null)
         {
@@ -66,12 +72,20 @@ public class ObjectsSpawner : MonoBehaviour
         return spawnPosition;
     }
 
+    public void DecreaseSpawnTime(float amount)
+    {
+        obstacleSpawnTime = Mathf.Max(minObstacleSpawnTime, obstacleSpawnTime - amount);
+    }
+
     private IEnumerator SpawnObstacle()
     {
         while (true)
         {
-            SpawnObject(obstaclePrefab);
-            yield return new WaitForSeconds(3f);
+            for (int i = 0; i < objectsToSpawn; i++)
+            {
+                SpawnObject(obstaclePrefab);
+            }
+            yield return new WaitForSeconds(obstacleSpawnTime);
         }
     }
 }

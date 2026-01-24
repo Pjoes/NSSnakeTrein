@@ -6,7 +6,8 @@ public class TrainController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 20f;
     [SerializeField] private float steerSpeed = 180f;
-    [SerializeField] private int gap = 10;
+    [SerializeField] private float gap = 75f;
+    [SerializeField] private float gapDecreaseAmount = 7.5f;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
     [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
@@ -30,7 +31,8 @@ public class TrainController : MonoBehaviour
         _scoreManager = FindFirstObjectByType<ScoreManager>();
 
         // Simulate adding an initial car to fix the gap between the locomotive and the first car
-        for (int i = 0; i < firstCarGap + (initialCars * gap); i++)
+        int requiredHistoryLength = firstCarGap + Mathf.RoundToInt(initialCars * gap);
+        for (int i = 0; i < requiredHistoryLength; i++)
         {
             positionsHistory.Add(transform.position);
             rotationHistory.Add(transform.rotation);
@@ -60,53 +62,46 @@ public class TrainController : MonoBehaviour
         rotationHistory.Insert(0, transform.rotation);
 
         // Move cars
-        int index = 0;
-        foreach (var car in cars)
+        for (int index = 0; index < cars.Count; index++)
         {
-            // First car has a larger gap, rest use normal gap
-            int historyIndex;
-            if (index == 0)
-            {
-                historyIndex = Mathf.Clamp(firstCarGap, 0, positionsHistory.Count - 1);
-            }
-            else
-            {
-                historyIndex = Mathf.Clamp(firstCarGap + (index * gap), 0, positionsHistory.Count - 1);
-            }
+            GameObject car = cars[index];
+            int historyIndex = CalculateHistoryIndex(index);
 
             Vector3 point = positionsHistory[historyIndex];
-
-            // Place car exactly at the recorded path point for tight spacing
-            Vector3 moveDirection = point - car.transform.position;
             car.transform.position = point;
 
             // Rotate car using the head's recorded rotation at the same path index
-            if (rotationHistory.Count > historyIndex)
-            {
-                car.transform.rotation = rotationHistory[historyIndex];
-            }
-
-            index++;
+            car.transform.rotation = rotationHistory[historyIndex];
         }
+    }
+
+    // Adjust the gap for the first car
+    private int CalculateHistoryIndex(int carIndex)
+    {
+        int rawIndex = (carIndex == 0)
+            ? firstCarGap
+            : firstCarGap + Mathf.RoundToInt(carIndex * gap);
+
+        return Mathf.Clamp(rawIndex, 0, positionsHistory.Count - 1);
     }
 
     private void GrowTrain()
     {
-        // Calculate where this new car should spawn in the history -> should be at the end of the current cars
         int newCarIndex = cars.Count;
-        int historyIndex = Mathf.Clamp(firstCarGap + (newCarIndex * gap), 0, positionsHistory.Count - 1);
+        int historyIndex = CalculateHistoryIndex(newCarIndex);
 
         // Get spawn position and rotation from history
-        Vector3 spawnPos = positionsHistory.Count > historyIndex ? positionsHistory[historyIndex] : transform.position;
-        Quaternion spawnRot = rotationHistory.Count > historyIndex ? rotationHistory[historyIndex] : transform.rotation;
+        Vector3 spawnPos = positionsHistory[historyIndex];
+        Quaternion spawnRot = rotationHistory[historyIndex];
 
         GameObject car = Instantiate(carPrefab, spawnPos, spawnRot);
         cars.Add(car);
     }
 
-    private void UpdateScore(int scoreToAdd)
+    public void IncreaseSpeed(int amount)
     {
-        _scoreManager.score += scoreToAdd;
+        moveSpeed += amount;
+        gap -= gapDecreaseAmount;
     }
 
     private void GameOver()
@@ -126,7 +121,7 @@ public class TrainController : MonoBehaviour
         if (other.gameObject.CompareTag("Passengers") && Time.time - lastFoodTime > 0.1f)
         {
             GrowTrain();
-            UpdateScore(scorePerPassenger);
+            _scoreManager.AddScore(scorePerPassenger);
             Destroy(other.gameObject);
 
             ObjectsSpawner spawner = FindFirstObjectByType<ObjectsSpawner>();

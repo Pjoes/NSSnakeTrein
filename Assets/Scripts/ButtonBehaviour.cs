@@ -9,6 +9,7 @@ public class ButtonBehaviour : MonoBehaviour
         // TODO: Extend if more scenes are added
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void MainMenu()
