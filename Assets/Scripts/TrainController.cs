@@ -35,6 +35,8 @@ public class TrainController : MonoBehaviour
     [SerializeField] private GameObject gameOverScreen;
 
     private ScoreManager _scoreManager;
+    private Vector3 _pickupHitboxBaseSize;
+    private bool _pickupHitboxBaseSizeInitialized = false;
 
     private List<GameObject> cars = new List<GameObject>();
     private List<Vector3> positionsHistory = new List<Vector3>();
@@ -42,7 +44,6 @@ public class TrainController : MonoBehaviour
 
     private int scorePerPassenger = 25;
     private float hitboxEnlargedDuration = 10f;
-    private float modifiedHitboxX = 0.1f;
     private bool isGameOver = false;
 
     // Expose current move speed for other systems
@@ -54,6 +55,17 @@ public class TrainController : MonoBehaviour
 
         transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         _scoreManager = FindFirstObjectByType<ScoreManager>();
+
+        // Cache the base size of the pickup hitbox for clamped scaling
+        if (pickupHitbox != null)
+        {
+            BoxCollider col = pickupHitbox.GetComponent<BoxCollider>();
+            if (col != null)
+            {
+                _pickupHitboxBaseSize = col.size;
+                _pickupHitboxBaseSizeInitialized = true;
+            }
+        }
 
         // Simulate adding an initial car to fix the gap between the locomotive and the first car
         int requiredHistoryLength = firstCarGap + Mathf.RoundToInt(initialCars * gap);
@@ -213,20 +225,19 @@ public class TrainController : MonoBehaviour
 
     public void EnlargePickupHitbox(float multiplier)
     {
-        if (pickupHitbox != null)
-        {
-            BoxCollider collider = pickupHitbox.GetComponent<BoxCollider>();
-            if (collider != null)
-            {
-                // If the hitbox is already enlarged, only reset the duration
-                if (enlargeHitboxCoroutine != null)
-                {
-                    StopCoroutine(enlargeHitboxCoroutine);
-                }
+        if (!_pickupHitboxBaseSizeInitialized || pickupHitbox == null)
+            return;
 
-                enlargeHitboxCoroutine = StartCoroutine(EnlargeAndRestoreHitbox(collider, multiplier));
-            }
+        BoxCollider collider = pickupHitbox.GetComponent<BoxCollider>();
+        if (collider == null)
+            return;
+
+        if (enlargeHitboxCoroutine != null)
+        {
+            StopCoroutine(enlargeHitboxCoroutine);
         }
+
+        enlargeHitboxCoroutine = StartCoroutine(EnlargeAndRestoreHitbox(collider, multiplier));
     }
 
     private Coroutine enlargeHitboxCoroutine = null;
@@ -234,30 +245,25 @@ public class TrainController : MonoBehaviour
     // Store original hitbox size and revert after powerup duration runs out
     private IEnumerator EnlargeAndRestoreHitbox(BoxCollider collider, float multiplier)
     {
-        Vector3 originalSize = collider.size;
+        // Clamp multiplier to max 3x and min 1x
+        float clampedMultiplier = Mathf.Clamp(multiplier, 1f, 3f);
 
-        // Clamp each component of the size vector individually
-        Vector3 clampedSize = new Vector3(
-            Mathf.Clamp(collider.size.x, originalSize.x, originalSize.x * multiplier),
-            Mathf.Clamp(collider.size.y, originalSize.y, originalSize.y * multiplier),
-            Mathf.Clamp(collider.size.z, originalSize.z, originalSize.z * multiplier)
-        );
-        float originalX = collider.transform.position.x;
-        collider.size = originalSize * multiplier;
-        collider.size = clampedSize;
+        // Apply immediately
+        collider.size = _pickupHitboxBaseSize * clampedMultiplier;
 
-        // Assign a new Vector3 position with modified x value
-        Vector3 pos = collider.transform.position;
-        pos.x = modifiedHitboxX;
-        collider.transform.position = pos;
+        if (enlargedHitboxVisual != null)
+        {
+            enlargedHitboxVisual.SetActive(true);
+        }
 
-        enlargedHitboxVisual.SetActive(true);
         yield return new WaitForSeconds(hitboxEnlargedDuration);
 
-        collider.size = originalSize;
-        pos.x = originalX;
-        collider.transform.position = pos;
-        enlargedHitboxVisual.SetActive(false);
+        // Restore
+        collider.size = _pickupHitboxBaseSize;
+        if (enlargedHitboxVisual != null)
+        {
+            enlargedHitboxVisual.SetActive(false);
+        }
 
         enlargeHitboxCoroutine = null;
     }
