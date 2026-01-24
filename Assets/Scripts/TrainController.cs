@@ -11,6 +11,8 @@ public class TrainController : MonoBehaviour
     [Header("Car Spacing")]
     [SerializeField] private float gap = 75f;
     [SerializeField] private float gapDecreaseAmount = 7.5f;
+    [SerializeField] private float maximumGapSize = 75f;
+    [SerializeField] private float minimumGapSize = 30f;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
 
@@ -114,6 +116,7 @@ public class TrainController : MonoBehaviour
     {
         moveSpeed += amount;
         gap -= gapDecreaseAmount;
+        Mathf.Clamp(gap, minimumGapSize, maximumGapSize);
     }
 
     // Display game over screen and pause the game
@@ -121,7 +124,7 @@ public class TrainController : MonoBehaviour
     {
         isGameOver = true;
 
-        _scoreManager.DisplayFinalScore();
+        _scoreManager.ManageFinalScore();
         gameOverScreen.SetActive(true);
 
         Cursor.lockState = CursorLockMode.None;

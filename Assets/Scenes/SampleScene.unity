@@ -527,7 +527,7 @@ Transform:
   m_GameObject: {fileID: 171378305}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 93.58069, y: 1.8236294, z: -3.4830973}
+  m_LocalPosition: {x: 100, y: 1.8236294, z: -3.4830973}
   m_LocalScale: {x: 100, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -895,7 +895,7 @@ Transform:
   m_GameObject: {fileID: 310270619}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.5806863, y: 1.8236294, z: -55.483097}
+  m_LocalPosition: {x: 3.5806863, y: 1.8236294, z: -60}
   m_LocalScale: {x: 185, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2156,7 +2156,7 @@ Transform:
   m_GameObject: {fileID: 739054029}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -86.41931, y: 1.8236294, z: -3.4830973}
+  m_LocalPosition: {x: -95, y: 1.8236294, z: -3.4830973}
   m_LocalScale: {x: 100, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2641,7 +2641,7 @@ Transform:
   m_GameObject: {fileID: 939100152}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.5806863, y: 1.8236294, z: 49.516903}
+  m_LocalPosition: {x: 3.5806863, y: 1.8236294, z: 55}
   m_LocalScale: {x: 185, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2902,9 +2902,12 @@ MonoBehaviour:
   minObstacleSpawnTime: 0.5
   defaultY: 12
   initialObstacleCount: 3
+  minDistanceFromTrain: 20
   passengersPrefab: {fileID: 4069689123106011819, guid: c74b0f4b189079e4789a169de04429a0, type: 3}
   obstaclePrefab: {fileID: 594458461016427324, guid: e4c71242588440b4fbff3c14fde09b31, type: 3}
-  minDistanceFromTrain: 20
+  enemyPrefab: {fileID: 8232594742556837296, guid: e7d1292b8ee102e4dae52181ac3ff3dc, type: 3}
+  initialEnemyCount: 1
+  enemySpawnY: 13
 --- !u!4 &1045907430
 Transform:
   m_ObjectHideFlags: 0
@@ -4364,6 +4367,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  highScoreFileName: highscore.txt
   currentScoreText: {fileID: 1313604547}
   finalScoreText: {fileID: 675997091}
 --- !u!4 &1613016696
@@ -4672,6 +4676,7 @@ MonoBehaviour:
   speedIncreaseThreshold: 75
   spawnRateIncreaseThreshold: 75
   spawnAmountIncreaseThreshold: 50
+  enemySpawnThreshold: 150
   speedIncreaseAmount: 3
   spawnTimeDecreaseAmount: 0.3
 --- !u!1 &2090428555

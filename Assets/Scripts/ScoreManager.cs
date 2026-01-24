@@ -1,10 +1,15 @@
 using UnityEngine;
+using System.IO;
 using TMPro;
 
 public class ScoreManager : MonoBehaviour
 {
     [Header("Score")]
     public int score;
+    private int highScore;
+
+    [Header("Persistence")]
+    [SerializeField] private string highScoreFileName = "highscore.txt";
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI currentScoreText, finalScoreText;
@@ -33,7 +38,7 @@ public class ScoreManager : MonoBehaviour
         currentScoreText.gameObject.SetActive(false);
     }
 
-    public void DisplayFinalScore()
+    public void ManageFinalScore()
     {
         if (finalScoreText != null)
         {
@@ -43,6 +48,53 @@ public class ScoreManager : MonoBehaviour
         else
         {
             Debug.LogWarning("Score Display Text (TMP_Text) is not assigned in ScoreManager!");
+        }
+
+        // Save new high score only if it's higher than current
+        int existingHigh = LoadHighScore();
+        if (score > existingHigh)
+        {
+            SaveHighScore(score);
+            highScore = score;
+        }
+    }
+
+    private string GetHighScorePath()
+    {
+        return Path.Combine(Application.persistentDataPath, highScoreFileName);
+    }
+
+    private int LoadHighScore()
+    {
+        string path = GetHighScorePath();
+        if (File.Exists(path))
+        {
+            try
+            {
+                string contents = File.ReadAllText(path);
+                if (int.TryParse(contents, out int value))
+                {
+                    return value;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to read high score: {e.Message}");
+            }
+        }
+        return 0;
+    }
+
+    private void SaveHighScore(int value)
+    {
+        string path = GetHighScorePath();
+        try
+        {
+            File.WriteAllText(path, value.ToString());
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"Failed to write high score: {e.Message}");
         }
     }
 

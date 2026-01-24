@@ -18,17 +18,22 @@ public class ObjectsSpawner : MonoBehaviour
     [SerializeField] private float minDistanceFromTrain = 20f;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject passengersPrefab, obstaclePrefab;
+    [SerializeField] private GameObject passengersPrefab, obstaclePrefab, enemyPrefab;
 
-    private TrainController trainController;
+    [Header("Enemy Spawning")]
+    [SerializeField] private int initialEnemyCount = 1;
+    [SerializeField] private float enemySpawnY = 0f;
+
+    private TrainController _trainController;
 
     // Spawn a few obstacles at the start before starting the coroutine
     private void Start()
     {
         SpawnObject(passengersPrefab);
 
-        trainController = FindFirstObjectByType<TrainController>();
-        if (trainController == null)
+        _trainController = FindFirstObjectByType<TrainController>();
+
+        if (_trainController == null)
         {
             Debug.LogWarning("TrainController not found in scene!");
         }
@@ -37,6 +42,12 @@ public class ObjectsSpawner : MonoBehaviour
         {
             SpawnObject(obstaclePrefab);
         }
+
+        for (int i = 0; i < initialEnemyCount; i++)
+        {
+            SpawnEnemy();
+        }
+
         StartCoroutine(SpawnObstacle());
     }
 
@@ -64,9 +75,9 @@ public class ObjectsSpawner : MonoBehaviour
             float randomZ = Random.Range(minZ, maxZ);
             spawnPosition = new Vector3(randomX, defaultY, randomZ);
 
-            if (trainController != null)
+            if (_trainController != null)
             {
-                distanceFromTrain = Vector3.Distance(spawnPosition, trainController.transform.position);
+                distanceFromTrain = Vector3.Distance(spawnPosition, _trainController.transform.position);
                 Debug.Log(distanceFromTrain);
                 Debug.Log("Spawning object at: " + spawnPosition.ToString());
             }
@@ -74,7 +85,7 @@ public class ObjectsSpawner : MonoBehaviour
             {
                 distanceFromTrain = minDistanceFromTrain + 1f; // If not close to the train, allow spawning
             }
-        } while (trainController != null && distanceFromTrain < minDistanceFromTrain);
+        } while (_trainController != null && distanceFromTrain < minDistanceFromTrain);
 
         return spawnPosition;
     }
@@ -94,5 +105,41 @@ public class ObjectsSpawner : MonoBehaviour
             }
             yield return new WaitForSeconds(obstacleSpawnTime);
         }
+    }
+
+    public GameObject SpawnEnemy()
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogWarning("Enemy prefab not assigned in ObjectsSpawner!");
+            return null;
+        }
+
+        // Pick a random edge: 0 = left, 1 = right, 2 = bottom, 3 = top
+        int edge = Random.Range(0, 4);
+        float x = 0f, z = 0f;
+
+        switch (edge)
+        {
+            case 0: // left
+                x = minX;
+                z = Random.Range(minZ, maxZ);
+                break;
+            case 1: // right
+                x = maxX;
+                z = Random.Range(minZ, maxZ);
+                break;
+            case 2: // bottom
+                z = minZ;
+                x = Random.Range(minX, maxX);
+                break;
+            case 3: // top
+                z = maxZ;
+                x = Random.Range(minX, maxX);
+                break;
+        }
+
+        Vector3 spawnPos = new Vector3(x, enemySpawnY, z);
+        return Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 }

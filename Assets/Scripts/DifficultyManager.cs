@@ -6,6 +6,7 @@ public class DifficultyManager : MonoBehaviour
     [SerializeField] private int speedIncreaseThreshold = 75;
     [SerializeField] private int spawnRateIncreaseThreshold = 50;
     [SerializeField] private int spawnAmountIncreaseThreshold = 25;
+    [SerializeField] private int enemySpawnThreshold = 150;
 
     [Header("Difficulty Increase Values")]
     [SerializeField] private int speedIncreaseAmount = 5;
@@ -36,6 +37,11 @@ public class DifficultyManager : MonoBehaviour
         {
             IncreaseObstacleSpawnAmount();
         }
+
+        if (ShouldSpawnEnemy(score))
+        {
+            SpawnNewEnemy();
+        }
     }
 
     private bool ShouldIncreaseSpeed(int score)
@@ -51,6 +57,11 @@ public class DifficultyManager : MonoBehaviour
     private bool ShouldIncreaseSpawnAmount(int score)
     {
         return score % spawnAmountIncreaseThreshold == 0;
+    }
+
+    private bool ShouldSpawnEnemy(int score)
+    {
+        return score % enemySpawnThreshold == 0;
     }
 
     private void IncreaseTrainSpeed()
@@ -74,6 +85,14 @@ public class DifficultyManager : MonoBehaviour
         if (_objectsSpawner != null)
         {
             _objectsSpawner.objectsToSpawn++;
+        }
+    }
+
+    private void SpawnNewEnemy()
+    {
+        if (_objectsSpawner != null)
+        {
+            _objectsSpawner.SpawnEnemy();
         }
     }
 }
