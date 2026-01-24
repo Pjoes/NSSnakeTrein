@@ -6,7 +6,10 @@ public class ObjectsSpawner : MonoBehaviour
     public int objectsToSpawn = 1;
 
     [Header("Bounds")]
-    [SerializeField] private float minX, maxX, minZ, maxZ;
+    [SerializeField] private float minX = -80;
+    [SerializeField] private float maxX = 80;
+    [SerializeField] private float minZ = -41;
+    [SerializeField] private float maxZ = 41;
 
     [Header("Time Modifiers")]
     [SerializeField] private float obstacleSpawnTime = 3f;
@@ -20,11 +23,19 @@ public class ObjectsSpawner : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] private GameObject passengersPrefab, obstaclePrefab, enemyPrefab;
 
+    [Header("Powerups")]
+    [SerializeField] private GameObject[] powerupPrefabs = new GameObject[4]; // TODO: Add in all powerups when created
+    [SerializeField] private float powerupInterval = 15f;
+    [SerializeField] private float powerupSpawnY = 13f;
+    private float powerupTimer = 0f;
+
     [Header("Enemy Spawning")]
     [SerializeField] private int initialEnemyCount = 1;
     [SerializeField] private float enemySpawnY = 0f;
 
-    private TrainController _trainController;
+    [Header("Script References")]
+    [SerializeField] private TrainController _trainController;
+    [SerializeField] private PowerupsCleaner _powerupsCleaner;
 
     // Spawn a few obstacles at the start before starting the coroutine
     private void Start()
@@ -32,6 +43,7 @@ public class ObjectsSpawner : MonoBehaviour
         SpawnObject(passengersPrefab);
 
         _trainController = FindFirstObjectByType<TrainController>();
+        _powerupsCleaner = FindFirstObjectByType<PowerupsCleaner>();
 
         if (_trainController == null)
         {
@@ -49,6 +61,16 @@ public class ObjectsSpawner : MonoBehaviour
         }
 
         StartCoroutine(SpawnObstacle());
+    }
+
+    private void Update()
+    {
+        powerupTimer += Time.deltaTime;
+        if (powerupTimer >= powerupInterval)
+        {
+            powerupTimer = 0f;
+            SpawnRandomPowerup();
+        }
     }
 
     public GameObject SpawnObject(GameObject prefab)
@@ -138,5 +160,63 @@ public class ObjectsSpawner : MonoBehaviour
 
         Vector3 spawnPos = new Vector3(x, enemySpawnY, z);
         return Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+    }
+
+    private void SpawnRandomPowerup()
+    {
+        if (powerupPrefabs == null || powerupPrefabs.Length == 0)
+        {
+            return;
+        }
+
+        // Choose a random non-null prefab from the array
+        int safety = 0;
+        GameObject prefab = null;
+        while (safety < powerupPrefabs.Length && prefab == null)
+        {
+            prefab = powerupPrefabs[Random.Range(0, powerupPrefabs.Length)];
+            safety++;
+        }
+
+        if (prefab == null)
+        {
+            return;
+        }
+
+        Vector3 spawnPos = GetRandomEdgePosition(powerupSpawnY);
+        Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        if (_powerupsCleaner != null)
+        {
+            StartCoroutine(_powerupsCleaner.CleanupAfterDelay());
+        }
+    }
+
+    private Vector3 GetRandomEdgePosition(float y)
+    {
+        int edge = Random.Range(0, 4);
+        float x = 0f, z = 0f;
+
+        switch (edge)
+        {
+            case 0: // left
+                x = minX;
+                z = Random.Range(minZ, maxZ);
+                break;
+            case 1: // right
+                x = maxX;
+                z = Random.Range(minZ, maxZ);
+                break;
+            case 2: // bottom
+                z = minZ;
+                x = Random.Range(minX, maxX);
+                break;
+            case 3: // top
+                z = maxZ;
+                x = Random.Range(minX, maxX);
+                break;
+        }
+
+        return new Vector3(x, y, z);
     }
 }
