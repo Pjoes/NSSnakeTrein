@@ -9,7 +9,7 @@ public class TrainController : MonoBehaviour
     [SerializeField] private int gap = 10;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
-    [SerializeField] private GameObject carPrefab, passengersPrefab;
+    [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
 
     private ScoreManager _scoreManager;
 
@@ -17,13 +17,15 @@ public class TrainController : MonoBehaviour
     private List<Vector3> positionsHistory = new List<Vector3>();
     private List<Quaternion> rotationHistory = new List<Quaternion>();
 
-    private int score = 0;
     private int scorePerPassenger = 25;
 
     private float lastFoodTime = -1f;
+    private bool isGameOver = false;
 
     private void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+
         transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         _scoreManager = FindFirstObjectByType<ScoreManager>();
 
@@ -42,6 +44,10 @@ public class TrainController : MonoBehaviour
 
     private void Update()
     {
+        // Ensure cars stop moving when the game is over
+        if (isGameOver)
+            return;
+
         // Move forward
         transform.position += transform.forward * moveSpeed * Time.deltaTime;
 
@@ -103,6 +109,17 @@ public class TrainController : MonoBehaviour
         _scoreManager.score += scoreToAdd;
     }
 
+    private void GameOver()
+    {
+        isGameOver = true;
+
+        _scoreManager.DisplayFinalScore();
+        gameOverScreen.SetActive(true);
+
+        Cursor.lockState = CursorLockMode.None;
+        Time.timeScale = 0f; // Pause the game
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         // Increase train length and score when picking up passengers
@@ -123,7 +140,7 @@ public class TrainController : MonoBehaviour
         else if (other.gameObject.CompareTag("Obstacle"))
         {
             Debug.Log("Hit Obstacle! Game Over.");
-            // Implement game over logic here
+            GameOver();
         }
     }
 }
