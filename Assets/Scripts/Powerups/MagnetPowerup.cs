@@ -11,7 +11,6 @@ public class MagnetPowerup : Powerup
         if (_trainController != null)
         {
             _trainController.EnlargePickupHitbox(sizeMultiplier);
-            Debug.Log("Increasing hitbox size by " + sizeMultiplier + "x");
         }
     }
 

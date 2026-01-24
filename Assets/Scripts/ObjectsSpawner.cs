@@ -26,11 +26,10 @@ public class ObjectsSpawner : MonoBehaviour
     [SerializeField] private GameObject enemyPrefab;
 
     [Header("Powerups")]
-    [SerializeField] private GameObject[] powerupPrefabs = new GameObject[powerupCount]; // TODO: Add in all powerups when created
+    [SerializeField] private GameObject[] powerupPrefabs = new GameObject[4];
     [SerializeField] private float powerupInterval = 15f;
     [SerializeField] private float powerupSpawnY = 13f;
     private float powerupTimer = 0f;
-    private static int powerupCount = 4;
 
     [Header("Enemy Spawning")]
     [SerializeField] private int initialEnemyCount = 1;
@@ -39,19 +38,33 @@ public class ObjectsSpawner : MonoBehaviour
     [Header("Script References")]
     [SerializeField] private TrainController _trainController;
 
-    private string powerupTag = "Powerup";
+    private const string PowerupTag = "Powerup";
 
-    // Spawn a few obstacles at the start before starting the coroutine
     private void Start()
     {
-        SpawnObject(passengersPrefab);
+        InitializeSpawner();
+        SpawnInitialObjects();
+        StartCoroutine(SpawnObstacle());
+    }
 
+    private void Update()
+    {
+        UpdatePowerupTimer();
+    }
+
+    private void InitializeSpawner()
+    {
         _trainController = FindFirstObjectByType<TrainController>();
 
         if (_trainController == null)
         {
             Debug.LogWarning("TrainController not found in scene!");
         }
+    }
+
+    private void SpawnInitialObjects()
+    {
+        SpawnObject(passengersPrefab);
 
         for (int i = 0; i < initialObstacleCount; i++)
         {
@@ -62,11 +75,9 @@ public class ObjectsSpawner : MonoBehaviour
         {
             SpawnEnemy();
         }
-
-        StartCoroutine(SpawnObstacle());
     }
 
-    private void Update()
+    private void UpdatePowerupTimer()
     {
         powerupTimer += Time.deltaTime;
         if (powerupTimer >= powerupInterval)
@@ -83,38 +94,54 @@ public class ObjectsSpawner : MonoBehaviour
             return null;
         }
 
-        Vector3 spawnPosition = GetSpawnPosition();
+        Vector3 spawnPosition = GetRandomPosition(defaultY, SpawnMode.AvoidTrain);
         return Instantiate(prefab, spawnPosition, Quaternion.identity);
     }
 
-    private Vector3 GetSpawnPosition()
+    public GameObject SpawnEnemy()
     {
-        Vector3 spawnPosition;
-        float distanceFromTrain;
-
-        // Ensure obstacles don't spawn too close to the train (would be unfair)
-        do
+        if (enemyPrefab == null)
         {
-            float randomX = Random.Range(minX, maxX);
-            float randomZ = Random.Range(minZ, maxZ);
-            spawnPosition = new Vector3(randomX, defaultY, randomZ);
+            Debug.LogWarning("Enemy prefab not assigned in ObjectsSpawner!");
+            return null;
+        }
 
-            if (_trainController != null)
-            {
-                distanceFromTrain = Vector3.Distance(spawnPosition, _trainController.transform.position);
-            }
-            else
-            {
-                distanceFromTrain = minDistanceFromTrain + 1f; // If not close to the train, allow spawning
-            }
-        } while (_trainController != null && distanceFromTrain < minDistanceFromTrain);
-
-        return spawnPosition;
+        Vector3 spawnPos = GetRandomPosition(enemySpawnY, SpawnMode.EdgesOnly);
+        return Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 
     public void DecreaseSpawnTime(float amount)
     {
         obstacleSpawnTime = Mathf.Max(minObstacleSpawnTime, obstacleSpawnTime - amount);
+    }
+
+    public void CleanupPowerups()
+    {
+        GameObject[] powerups = GameObject.FindGameObjectsWithTag(PowerupTag);
+        foreach (var powerup in powerups)
+        {
+            Destroy(powerup);
+        }
+    }
+
+    private void SpawnRandomPowerup()
+    {
+        CleanupPowerups();
+
+        GameObject powerupToSpawn = GetRandomPowerupPrefab();
+        if (powerupToSpawn == null)
+        {
+            Debug.LogWarning("Powerup prefab is null");
+            return;
+        }
+
+        Vector3 spawnPos = GetRandomPosition(powerupSpawnY, SpawnMode.Anywhere);
+        Instantiate(powerupToSpawn, spawnPos, Quaternion.identity);
+    }
+
+    private GameObject GetRandomPowerupPrefab()
+    {
+        return powerupPrefabs[Random.Range(0, powerupPrefabs.Length)];
     }
 
     private IEnumerator SpawnObstacle()
@@ -129,95 +156,85 @@ public class ObjectsSpawner : MonoBehaviour
         }
     }
 
-    public GameObject SpawnEnemy()
+    private Vector3 GetRandomPosition(float y, SpawnMode mode)
     {
-        if (enemyPrefab == null)
+        switch (mode)
         {
-            Debug.LogWarning("Enemy prefab not assigned in ObjectsSpawner!");
-            return null;
+            case SpawnMode.AvoidTrain:
+                return GetPositionAvoidingTrain(y);
+            case SpawnMode.EdgesOnly:
+                return GetEdgePosition(y);
+            case SpawnMode.Anywhere:
+            default:
+                return GetAnywherePosition(y);
         }
+    }
 
-        // Pick a random edge: 0 = left, 1 = right, 2 = bottom, 3 = top
+    private Vector3 GetPositionAvoidingTrain(float y)
+    {
+        Vector3 spawnPosition;
+        float distanceFromTrain;
+
+        do
+        {
+            spawnPosition = GetAnywherePosition(y);
+
+            if (_trainController != null)
+            {
+                distanceFromTrain = Vector3.Distance(spawnPosition, _trainController.transform.position);
+            }
+            else
+            {
+                distanceFromTrain = minDistanceFromTrain + 1f;
+            }
+        } while (_trainController != null && distanceFromTrain < minDistanceFromTrain);
+
+        return spawnPosition;
+    }
+
+    private Vector3 GetAnywherePosition(float y)
+    {
+        float randomX = Random.Range(minX, maxX);
+        float randomZ = Random.Range(minZ, maxZ);
+        return new Vector3(randomX, y, randomZ);
+    }
+
+    private Vector3 GetEdgePosition(float y)
+    {
         int edge = Random.Range(0, 4);
-        float x = 0f, z = 0f;
+        float x, z;
 
         switch (edge)
         {
-            case 0: // left
+            case 0: // Left
                 x = minX;
                 z = Random.Range(minZ, maxZ);
                 break;
-            case 1: // right
+            case 1: // Right
                 x = maxX;
                 z = Random.Range(minZ, maxZ);
                 break;
-            case 2: // bottom
+            case 2: // Bottom
+                x = Random.Range(minX, maxX);
                 z = minZ;
-                x = Random.Range(minX, maxX);
                 break;
-            case 3: // top
+            case 3: // Top
+                x = Random.Range(minX, maxX);
                 z = maxZ;
-                x = Random.Range(minX, maxX);
                 break;
-        }
-
-        Vector3 spawnPos = new Vector3(x, enemySpawnY, z);
-        return Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-    }
-
-    private void SpawnRandomPowerup()
-    {
-        // Cleanup existing powerup(s) before spawning a new one
-        CleanupPowerups();
-
-        // Choose a random powerup to spawn
-        GameObject powerupToSpawn = powerupPrefabs[Random.Range(0, powerupCount)]; ;
-
-        if (powerupToSpawn == null)
-        {
-            Debug.LogWarning("Powerup prefab is null");
-            return;
-        }
-
-        Vector3 spawnPos = GetRandomEdgePosition(powerupSpawnY);
-        Instantiate(powerupToSpawn, spawnPos, Quaternion.identity);
-    }
-
-    // Remove all existing powerups from the scene (maybe bad for performance on a larger scale?)
-    public void CleanupPowerups()
-    {
-        GameObject[] powerups = GameObject.FindGameObjectsWithTag(powerupTag);
-        foreach (var p in powerups)
-        {
-            Destroy(p);
-        }
-    }
-
-    private Vector3 GetRandomEdgePosition(float y)
-    {
-        int edge = Random.Range(0, 4);
-        float x = 0f, z = 0f;
-
-        switch (edge)
-        {
-            case 0: // left
+            default:
                 x = minX;
-                z = Random.Range(minZ, maxZ);
-                break;
-            case 1: // right
-                x = maxX;
-                z = Random.Range(minZ, maxZ);
-                break;
-            case 2: // bottom
                 z = minZ;
-                x = Random.Range(minX, maxX);
-                break;
-            case 3: // top
-                z = maxZ;
-                x = Random.Range(minX, maxX);
                 break;
         }
 
         return new Vector3(x, y, z);
+    }
+
+    private enum SpawnMode
+    {
+        Anywhere,
+        EdgesOnly,
+        AvoidTrain
     }
 }

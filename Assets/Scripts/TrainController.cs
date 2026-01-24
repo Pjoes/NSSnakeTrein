@@ -17,6 +17,12 @@ public class TrainController : MonoBehaviour
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
 
+    [Header("Bounds")]
+    [SerializeField] private float minX = -85;
+    [SerializeField] private float maxX = 85;
+    [SerializeField] private float minZ = -50;
+    [SerializeField] private float maxZ = 50;
+
     [Header("Prefabs")]
     [SerializeField] private GameObject carPrefab;
     [SerializeField] private GameObject passengersPrefab;
@@ -30,6 +36,7 @@ public class TrainController : MonoBehaviour
     public GameObject armourVisual;
     public int health = 1;
     public int maxHealth = 2;
+    [SerializeField] private float damageInvulnerableDuration = 1f;
 
     [Header("UI")]
     [SerializeField] private GameObject gameOverScreen;
@@ -37,6 +44,7 @@ public class TrainController : MonoBehaviour
     private ScoreManager _scoreManager;
     private Vector3 _pickupHitboxBaseSize;
     private bool _pickupHitboxBaseSizeInitialized = false;
+    private bool _isDamageInvulnerable = false;
 
     private List<GameObject> cars = new List<GameObject>();
     private List<Vector3> positionsHistory = new List<Vector3>();
@@ -44,6 +52,8 @@ public class TrainController : MonoBehaviour
 
     private int scorePerPassenger = 25;
     private float hitboxEnlargedDuration = 10f;
+    private Coroutine enlargeHitboxCoroutine = null;
+
     private bool isGameOver = false;
 
     // Expose current move speed for other systems
@@ -92,14 +102,13 @@ public class TrainController : MonoBehaviour
         if (isGameOver)
             return;
 
-        // Move forward
         transform.position += transform.forward * moveSpeed * Time.deltaTime;
 
-        // Steer
         float steerDirection = Input.GetAxis("Horizontal"); // Returns value -1, 0, or 1
         transform.Rotate(Vector3.up * steerDirection * steerSpeed * Time.deltaTime);
 
-        // Store position history
+        PreventOutOfBounds();
+
         positionsHistory.Insert(0, transform.position);
         rotationHistory.Insert(0, transform.rotation);
 
@@ -111,8 +120,6 @@ public class TrainController : MonoBehaviour
 
             Vector3 point = positionsHistory[historyIndex];
             car.transform.position = point;
-
-            // Rotate car using the head's recorded rotation at the same path index
             car.transform.rotation = rotationHistory[historyIndex];
         }
     }
@@ -151,9 +158,17 @@ public class TrainController : MonoBehaviour
     // Updates health and checks for game over
     public void UpdateHealth(int amount)
     {
+        // Ignore consecutive hits during brief invulnerability window
+        if (amount < 0 && _isDamageInvulnerable)
+            return;
+
         health += amount;
-        Debug.Log(health);
         health = Mathf.Clamp(health, 0, maxHealth);
+
+        if (amount < 0 && !_isDamageInvulnerable)
+        {
+            StartCoroutine(DamageInvulnerability());
+        }
 
         ToggleArmourVisual();
         GameOver();
@@ -202,17 +217,20 @@ public class TrainController : MonoBehaviour
         }
     }
 
+    // Activate damage hitbox after a delay to prevent immediate death on level start
     private IEnumerator ActivateDamageHitbox()
     {
         yield return new WaitForSeconds(secondsToActivateDamageHitbox);
         damageHitbox.SetActive(true);
     }
 
+    // Apply brake effect and recover original speed over time
     public void ApplyBrake(float brakeSpeed, float recoveryDuration)
     {
         StartCoroutine(BrakeAndRecover(brakeSpeed, recoveryDuration));
     }
 
+    // Uncouple last N cars from the traim
     public void RemoveLastCars(int count)
     {
         for (int i = 0; i < count && cars.Count > 0; i++)
@@ -223,6 +241,7 @@ public class TrainController : MonoBehaviour
         }
     }
 
+    // Enlarge the pickup hitbox for a short duration
     public void EnlargePickupHitbox(float multiplier)
     {
         if (!_pickupHitboxBaseSizeInitialized || pickupHitbox == null)
@@ -240,7 +259,27 @@ public class TrainController : MonoBehaviour
         enlargeHitboxCoroutine = StartCoroutine(EnlargeAndRestoreHitbox(collider, multiplier));
     }
 
-    private Coroutine enlargeHitboxCoroutine = null;
+    // Ensure player cannot leave the playable area with extra health
+    private void PreventOutOfBounds()
+    {
+        bool isOutOfBounds = false;
+
+        if (transform.position.x < minX || transform.position.x > maxX)
+        {
+            isOutOfBounds = true;
+        }
+
+        if (transform.position.z < minZ || transform.position.z > maxZ)
+        {
+            isOutOfBounds = true;
+        }
+
+        if (isOutOfBounds)
+        {
+            health = 0;
+            GameOver();
+        }
+    }
 
     // Store original hitbox size and revert after powerup duration runs out
     private IEnumerator EnlargeAndRestoreHitbox(BoxCollider collider, float multiplier)
@@ -284,5 +323,13 @@ public class TrainController : MonoBehaviour
         }
 
         moveSpeed = originalSpeed;
+    }
+
+    // Brief invulnerability after taking damage to prevent multiple hits in quick succession
+    private IEnumerator DamageInvulnerability()
+    {
+        _isDamageInvulnerable = true;
+        yield return new WaitForSeconds(damageInvulnerableDuration);
+        _isDamageInvulnerable = false;
     }
 }
