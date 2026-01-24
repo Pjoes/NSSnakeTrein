@@ -1,16 +1,26 @@
 using UnityEngine;
 
-public class MagnetPowerup : MonoBehaviour
+public class MagnetPowerup : Powerup
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private float sizeMultiplier = 3f;
+    [SerializeField] private string pickupHitboxTag = "PickupHitbox";
+
+    protected override void DoMainAction()
     {
-        
+        FindTrainController();
+        if (_trainController != null)
+        {
+            _trainController.EnlargePickupHitbox(sizeMultiplier);
+            Debug.Log("Increasing hitbox size by " + sizeMultiplier + "x");
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    protected override void OnTriggerEnter(Collider other)
     {
-        
+        if (other.CompareTag(pickupHitboxTag))
+        {
+            DoMainAction();
+            Destroy(gameObject);
+        }
     }
 }

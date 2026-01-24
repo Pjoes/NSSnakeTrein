@@ -1,16 +1,25 @@
 using UnityEngine;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class UncouplePowerup : Powerup
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private int carsToUncouple = 2;
+    [SerializeField] private string pickupHitboxTag = "PickupHitbox";
+
+    protected override void DoMainAction()
     {
-        
+        FindTrainController();
+        if (_trainController != null)
+        {
+            _trainController.RemoveLastCars(carsToUncouple);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    protected override void OnTriggerEnter(Collider other)
     {
-        
+        if (other.CompareTag(pickupHitboxTag))
+        {
+            DoMainAction();
+            Destroy(gameObject);
+        }
     }
 }

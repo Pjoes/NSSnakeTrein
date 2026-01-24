@@ -2,11 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider))]
 public class TrainController : MonoBehaviour
 {
     [Header("Train Movement")]
-    [SerializeField] private float moveSpeed = 20f;
+    public float moveSpeed = 20f;
     [SerializeField] private float steerSpeed = 180f;
     [SerializeField] private float secondsToActivateDamageHitbox = 2f;
 
@@ -19,15 +18,21 @@ public class TrainController : MonoBehaviour
     [SerializeField] private int initialCars = 3;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
+    [SerializeField] private GameObject carPrefab;
+    [SerializeField] private GameObject passengersPrefab;
 
     [Header("Hitboxes")]
     [SerializeField] private GameObject damageHitbox;
+    [SerializeField] private GameObject pickupHitbox;
+    [SerializeField] private GameObject enlargedHitboxVisual;
 
     [Header("Powerups")]
     public GameObject armourVisual;
     public int health = 1;
     public int maxHealth = 2;
+
+    [Header("UI")]
+    [SerializeField] private GameObject gameOverScreen;
 
     private ScoreManager _scoreManager;
 
@@ -36,10 +41,11 @@ public class TrainController : MonoBehaviour
     private List<Quaternion> rotationHistory = new List<Quaternion>();
 
     private int scorePerPassenger = 25;
-
+    private float hitboxEnlargedDuration = 10f;
+    private float modifiedHitboxX = 0.1f;
     private bool isGameOver = false;
 
-    // Expose current move speed for other systems (e.g., enemy prediction)
+    // Expose current move speed for other systems
     public float CurrentSpeed => moveSpeed;
 
     private void Start()
@@ -188,5 +194,89 @@ public class TrainController : MonoBehaviour
     {
         yield return new WaitForSeconds(secondsToActivateDamageHitbox);
         damageHitbox.SetActive(true);
+    }
+
+    public void ApplyBrake(float brakeSpeed, float recoveryDuration)
+    {
+        StartCoroutine(BrakeAndRecover(brakeSpeed, recoveryDuration));
+    }
+
+    public void RemoveLastCars(int count)
+    {
+        for (int i = 0; i < count && cars.Count > 0; i++)
+        {
+            GameObject carToRemove = cars[cars.Count - 1];
+            cars.RemoveAt(cars.Count - 1);
+            Destroy(carToRemove);
+        }
+    }
+
+    public void EnlargePickupHitbox(float multiplier)
+    {
+        if (pickupHitbox != null)
+        {
+            BoxCollider collider = pickupHitbox.GetComponent<BoxCollider>();
+            if (collider != null)
+            {
+                // If the hitbox is already enlarged, only reset the duration
+                if (enlargeHitboxCoroutine != null)
+                {
+                    StopCoroutine(enlargeHitboxCoroutine);
+                }
+
+                enlargeHitboxCoroutine = StartCoroutine(EnlargeAndRestoreHitbox(collider, multiplier));
+            }
+        }
+    }
+
+    private Coroutine enlargeHitboxCoroutine = null;
+
+    // Store original hitbox size and revert after powerup duration runs out
+    private IEnumerator EnlargeAndRestoreHitbox(BoxCollider collider, float multiplier)
+    {
+        Vector3 originalSize = collider.size;
+
+        // Clamp each component of the size vector individually
+        Vector3 clampedSize = new Vector3(
+            Mathf.Clamp(collider.size.x, originalSize.x, originalSize.x * multiplier),
+            Mathf.Clamp(collider.size.y, originalSize.y, originalSize.y * multiplier),
+            Mathf.Clamp(collider.size.z, originalSize.z, originalSize.z * multiplier)
+        );
+        float originalX = collider.transform.position.x;
+        collider.size = originalSize * multiplier;
+        collider.size = clampedSize;
+
+        // Assign a new Vector3 position with modified x value
+        Vector3 pos = collider.transform.position;
+        pos.x = modifiedHitboxX;
+        collider.transform.position = pos;
+
+        enlargedHitboxVisual.SetActive(true);
+        yield return new WaitForSeconds(hitboxEnlargedDuration);
+
+        collider.size = originalSize;
+        pos.x = originalX;
+        collider.transform.position = pos;
+        enlargedHitboxVisual.SetActive(false);
+
+        enlargeHitboxCoroutine = null;
+    }
+
+    // Recover original speed after hitting brake powerup (placed here because the powerup gets destroyed on pickup)
+    private IEnumerator BrakeAndRecover(float brakeSpeed, float recoveryDuration)
+    {
+        float originalSpeed = moveSpeed;
+        moveSpeed = brakeSpeed;
+
+        float elapsedTime = 0f;
+        while (elapsedTime < recoveryDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float recoveryProgress = elapsedTime / recoveryDuration;
+            moveSpeed = Mathf.Lerp(brakeSpeed, originalSpeed, recoveryProgress);
+            yield return null;
+        }
+
+        moveSpeed = originalSpeed;
     }
 }

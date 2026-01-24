@@ -1,16 +1,26 @@
 using UnityEngine;
 
-public class BrakePowerup : MonoBehaviour
+public class BrakePowerup : Powerup
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private float brakeSpeed = 10f;
+    [SerializeField] private float recoveryDuration = 5f;
+    [SerializeField] private string pickupHitboxTag = "PickupHitbox";
+
+    protected override void DoMainAction()
     {
-        
+        FindTrainController();
+        if (_trainController != null)
+        {
+            _trainController.ApplyBrake(brakeSpeed, recoveryDuration);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    protected override void OnTriggerEnter(Collider other)
     {
-        
+        if (other.CompareTag(pickupHitboxTag))
+        {
+            DoMainAction();
+            Destroy(gameObject);
+        }
     }
 }
