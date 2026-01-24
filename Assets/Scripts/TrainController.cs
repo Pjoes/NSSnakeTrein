@@ -11,18 +11,23 @@ public class TrainController : MonoBehaviour
     [SerializeField] private int initialCars = 3;
     [SerializeField] private GameObject carPrefab, passengersPrefab;
 
+    private ScoreManager _scoreManager;
+
     private List<GameObject> cars = new List<GameObject>();
     private List<Vector3> positionsHistory = new List<Vector3>();
     private List<Quaternion> rotationHistory = new List<Quaternion>();
 
     private int score = 0;
+    private int scorePerPassenger = 25;
+
     private float lastFoodTime = -1f;
 
     private void Start()
     {
         transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+        _scoreManager = FindFirstObjectByType<ScoreManager>();
 
-        // Pre-populate position history so GrowTrain() can access it
+        // Simulate adding an initial car to fix the gap between the locomotive and the first car
         for (int i = 0; i < firstCarGap + (initialCars * gap); i++)
         {
             positionsHistory.Add(transform.position);
@@ -81,7 +86,7 @@ public class TrainController : MonoBehaviour
 
     private void GrowTrain()
     {
-        // Calculate where this new car should spawn in the history
+        // Calculate where this new car should spawn in the history -> should be at the end of the current cars
         int newCarIndex = cars.Count;
         int historyIndex = Mathf.Clamp(firstCarGap + (newCarIndex * gap), 0, positionsHistory.Count - 1);
 
@@ -93,14 +98,22 @@ public class TrainController : MonoBehaviour
         cars.Add(car);
     }
 
+    private void UpdateScore(int scoreToAdd)
+    {
+        _scoreManager.score += scoreToAdd;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
+        // Increase train length and score when picking up passengers
         if (other.gameObject.CompareTag("Passengers") && Time.time - lastFoodTime > 0.1f)
         {
             GrowTrain();
-            score += 10;
+            UpdateScore(scorePerPassenger);
             Destroy(other.gameObject);
+
             ObjectsSpawner spawner = FindFirstObjectByType<ObjectsSpawner>();
+
             if (spawner != null)
             {
                 spawner.SpawnObject(passengersPrefab);

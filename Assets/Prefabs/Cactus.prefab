@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3921330280972182791}
   - component: {fileID: 1338724849991322661}
   - component: {fileID: 1429810944388925018}
+  - component: {fileID: 7039470125138972144}
   m_Layer: 0
   m_Name: Cactus
   m_TagString: Obstacle
@@ -102,9 +103,22 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7039470125138972144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594458461016427324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53875d70316d63345805b757e69ab3e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  despawnTime: 5
