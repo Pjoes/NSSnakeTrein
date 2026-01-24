@@ -21,13 +21,16 @@ public class ObjectsSpawner : MonoBehaviour
     [SerializeField] private float minDistanceFromTrain = 20f;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject passengersPrefab, obstaclePrefab, enemyPrefab;
+    [SerializeField] private GameObject passengersPrefab;
+    [SerializeField] private GameObject obstaclePrefab;
+    [SerializeField] private GameObject enemyPrefab;
 
     [Header("Powerups")]
-    [SerializeField] private GameObject[] powerupPrefabs = new GameObject[4]; // TODO: Add in all powerups when created
+    [SerializeField] private GameObject[] powerupPrefabs = new GameObject[powerupCount]; // TODO: Add in all powerups when created
     [SerializeField] private float powerupInterval = 15f;
     [SerializeField] private float powerupSpawnY = 13f;
     private float powerupTimer = 0f;
+    private static int powerupCount = 4;
 
     [Header("Enemy Spawning")]
     [SerializeField] private int initialEnemyCount = 1;
@@ -35,7 +38,8 @@ public class ObjectsSpawner : MonoBehaviour
 
     [Header("Script References")]
     [SerializeField] private TrainController _trainController;
-    [SerializeField] private PowerupsCleaner _powerupsCleaner;
+
+    private string powerupTag = "Powerup";
 
     // Spawn a few obstacles at the start before starting the coroutine
     private void Start()
@@ -43,7 +47,6 @@ public class ObjectsSpawner : MonoBehaviour
         SpawnObject(passengersPrefab);
 
         _trainController = FindFirstObjectByType<TrainController>();
-        _powerupsCleaner = FindFirstObjectByType<PowerupsCleaner>();
 
         if (_trainController == null)
         {
@@ -164,31 +167,29 @@ public class ObjectsSpawner : MonoBehaviour
 
     private void SpawnRandomPowerup()
     {
-        if (powerupPrefabs == null || powerupPrefabs.Length == 0)
-        {
-            return;
-        }
+        // Cleanup existing powerup(s) before spawning a new one
+        CleanupPowerups();
 
-        // Choose a random non-null prefab from the array
-        int safety = 0;
-        GameObject prefab = null;
-        while (safety < powerupPrefabs.Length && prefab == null)
-        {
-            prefab = powerupPrefabs[Random.Range(0, powerupPrefabs.Length)];
-            safety++;
-        }
+        // Choose a random powerup to spawn
+        GameObject powerupToSpawn = powerupPrefabs[Random.Range(0, powerupCount)]; ;
 
-        if (prefab == null)
+        if (powerupToSpawn == null)
         {
+            Debug.LogWarning("Powerup prefab is null");
             return;
         }
 
         Vector3 spawnPos = GetRandomEdgePosition(powerupSpawnY);
-        Instantiate(prefab, spawnPos, Quaternion.identity);
+        Instantiate(powerupToSpawn, spawnPos, Quaternion.identity);
+    }
 
-        if (_powerupsCleaner != null)
+    // Remove all existing powerups from the scene (maybe bad for performance on a larger scale?)
+    public void CleanupPowerups()
+    {
+        GameObject[] powerups = GameObject.FindGameObjectsWithTag(powerupTag);
+        foreach (var p in powerups)
         {
-            StartCoroutine(_powerupsCleaner.CleanupAfterDelay());
+            Destroy(p);
         }
     }
 
