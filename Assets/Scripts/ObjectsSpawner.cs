@@ -55,7 +55,6 @@ public class ObjectsSpawner : MonoBehaviour
     {
         if (prefab == null)
         {
-            Debug.LogWarning("SpawnObject called with null prefab.");
             return null;
         }
 
@@ -78,8 +77,6 @@ public class ObjectsSpawner : MonoBehaviour
             if (_trainController != null)
             {
                 distanceFromTrain = Vector3.Distance(spawnPosition, _trainController.transform.position);
-                Debug.Log(distanceFromTrain);
-                Debug.Log("Spawning object at: " + spawnPosition.ToString());
             }
             else
             {

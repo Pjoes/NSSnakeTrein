@@ -2,15 +2,23 @@ using UnityEngine;
 
 public class ArmourPowerup : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private int armourValue = 1;
+
+    private void ApplyArmour(Collider other)
     {
-        
+        TrainController _trainController = other.GetComponent<TrainController>();
+        if (_trainController != null)
+        {
+            _trainController.UpdateHealth(armourValue);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        
+        if (other.CompareTag("Player"))
+        {
+            ApplyArmour(other);
+            Destroy(gameObject);
+        }
     }
 }

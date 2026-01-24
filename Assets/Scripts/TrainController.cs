@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public class TrainController : MonoBehaviour
     [Header("Train Movement")]
     [SerializeField] private float moveSpeed = 20f;
     [SerializeField] private float steerSpeed = 180f;
+    [SerializeField] private float secondsToActivateDamageHitbox = 2f;
 
     [Header("Car Spacing")]
     [SerializeField] private float gap = 75f;
@@ -19,8 +21,13 @@ public class TrainController : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
 
-    [Header("Tags")]
-    [SerializeField] private string passengersTag = "Passengers", obstacleTag = "Obstacle", carTag = "Car";
+    [Header("Hitboxes")]
+    [SerializeField] private GameObject damageHitbox;
+
+    [Header("Powerups")]
+    public GameObject armourVisual;
+    public int health = 1;
+    public int maxHealth = 2;
 
     private ScoreManager _scoreManager;
 
@@ -30,7 +37,6 @@ public class TrainController : MonoBehaviour
 
     private int scorePerPassenger = 25;
 
-    private float lastFoodTime = -1f;
     private bool isGameOver = false;
 
     // Expose current move speed for other systems (e.g., enemy prediction)
@@ -55,6 +61,11 @@ public class TrainController : MonoBehaviour
         {
             GrowTrain();
         }
+
+        ToggleArmourVisual();
+
+        // Activate damage hitbox after a delay to prevent player immediately dying upon level start
+        StartCoroutine(ActivateDamageHitbox());
     }
 
     private void Update()
@@ -119,40 +130,62 @@ public class TrainController : MonoBehaviour
         Mathf.Clamp(gap, minimumGapSize, maximumGapSize);
     }
 
+    // Updates health and checks for game over
+    public void UpdateHealth(int amount)
+    {
+        health += amount;
+        health = Mathf.Clamp(health, 0, maxHealth);
+
+        ToggleArmourVisual();
+        GameOver();
+    }
+
+    private void ToggleArmourVisual()
+    {
+
+        if (health > 1)
+        {
+            armourVisual.SetActive(true);
+        }
+        else
+        {
+            armourVisual.SetActive(false);
+        }
+    }
+
     // Display game over screen and pause the game
     private void GameOver()
     {
-        isGameOver = true;
+        if (health <= 0)
+        {
+            isGameOver = true;
 
-        _scoreManager.ManageFinalScore();
-        gameOverScreen.SetActive(true);
+            _scoreManager.ManageFinalScore();
+            gameOverScreen.SetActive(true);
 
-        Cursor.lockState = CursorLockMode.None;
-        Time.timeScale = 0f;
+            Cursor.lockState = CursorLockMode.None;
+            Time.timeScale = 0f;
+        }
     }
 
-    // Check for collisions with passengers and obstacles
-    private void OnTriggerEnter(Collider other)
+    // Called by PickupHitbox when hit by passengers
+    public void PickupPassenger(GameObject passengerObject)
     {
-        // Increase train length and score when picking up passengers
-        if (other.gameObject.CompareTag(passengersTag) && Time.time - lastFoodTime > 0.1f)
-        {
-            GrowTrain();
-            _scoreManager.AddScore(scorePerPassenger);
-            Destroy(other.gameObject);
+        GrowTrain();
+        _scoreManager.AddScore(scorePerPassenger);
+        Destroy(passengerObject);
 
-            ObjectsSpawner spawner = FindFirstObjectByType<ObjectsSpawner>();
+        ObjectsSpawner _spawner = FindFirstObjectByType<ObjectsSpawner>();
 
-            if (spawner != null)
-            {
-                spawner.SpawnObject(passengersPrefab);
-            }
-            lastFoodTime = Time.time;
-        }
-        if (other.gameObject.CompareTag(obstacleTag) || other.gameObject.CompareTag(carTag))
+        if (_spawner != null)
         {
-            Debug.Log("Hit Obstacle! Game Over.");
-            GameOver();
+            _spawner.SpawnObject(passengersPrefab);
         }
+    }
+
+    private IEnumerator ActivateDamageHitbox()
+    {
+        yield return new WaitForSeconds(secondsToActivateDamageHitbox);
+        damageHitbox.SetActive(true);
     }
 }

@@ -12,7 +12,6 @@ public class CarController : MonoBehaviour
     {
         if (other.CompareTag(obstacleTag))
         {
-            Debug.Log("Car has collided with an obstacle!");
             // Ensure only one car gets destroyed
             Destroy(other.gameObject);
 
