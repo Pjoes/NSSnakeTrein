@@ -134,6 +134,7 @@ public class TrainController : MonoBehaviour
     public void UpdateHealth(int amount)
     {
         health += amount;
+        Debug.Log(health);
         health = Mathf.Clamp(health, 0, maxHealth);
 
         ToggleArmourVisual();

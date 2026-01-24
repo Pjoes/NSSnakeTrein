@@ -8,6 +8,7 @@ TagManager:
   - Passengers
   - Car
   - PickupHitbox
+  - Powerup
   layers:
   - Default
   - TransparentFX
