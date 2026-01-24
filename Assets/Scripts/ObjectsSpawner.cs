@@ -5,13 +5,20 @@ public class ObjectsSpawner : MonoBehaviour
 {
     public int objectsToSpawn = 1;
 
+    [Header("Bounds")]
     [SerializeField] private float minX, maxX, minZ, maxZ;
+
+    [Header("Time Modifiers")]
     [SerializeField] private float obstacleSpawnTime = 3f;
     [SerializeField] private float minObstacleSpawnTime = 0.5f;
+
+    [Header("Spawn Settings")]
     [SerializeField] private float defaultY = 12f;
     [SerializeField] private int initialObstacleCount = 3;
-    [SerializeField] private GameObject passengersPrefab, obstaclePrefab;
     [SerializeField] private float minDistanceFromTrain = 20f;
+
+    [Header("Prefabs")]
+    [SerializeField] private GameObject passengersPrefab, obstaclePrefab;
 
     private TrainController trainController;
 

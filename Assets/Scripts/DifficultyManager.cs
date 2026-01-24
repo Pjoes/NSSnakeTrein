@@ -2,9 +2,12 @@ using UnityEngine;
 
 public class DifficultyManager : MonoBehaviour
 {
+    [Header("Difficulty Increase Thresholds")]
     [SerializeField] private int speedIncreaseThreshold = 75;
     [SerializeField] private int spawnRateIncreaseThreshold = 50;
     [SerializeField] private int spawnAmountIncreaseThreshold = 25;
+
+    [Header("Difficulty Increase Values")]
     [SerializeField] private int speedIncreaseAmount = 5;
     [SerializeField] private float spawnTimeDecreaseAmount = 0.3f;
 

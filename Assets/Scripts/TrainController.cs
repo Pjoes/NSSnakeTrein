@@ -4,13 +4,20 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public class TrainController : MonoBehaviour
 {
+    [Header("Train Movement")]
     [SerializeField] private float moveSpeed = 20f;
     [SerializeField] private float steerSpeed = 180f;
+
+    [Header("Car Spacing")]
     [SerializeField] private float gap = 75f;
     [SerializeField] private float gapDecreaseAmount = 7.5f;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
+
+    [Header("Prefabs")]
     [SerializeField] private GameObject carPrefab, passengersPrefab, gameOverScreen;
+
+    [Header("Tags")]
     [SerializeField] private string passengersTag = "Passengers", obstacleTag = "Obstacle", carTag = "Car";
 
     private ScoreManager _scoreManager;
@@ -23,6 +30,9 @@ public class TrainController : MonoBehaviour
 
     private float lastFoodTime = -1f;
     private bool isGameOver = false;
+
+    // Expose current move speed for other systems (e.g., enemy prediction)
+    public float CurrentSpeed => moveSpeed;
 
     private void Start()
     {

@@ -3,7 +3,10 @@ using TMPro;
 
 public class ScoreManager : MonoBehaviour
 {
+    [Header("Score")]
     public int score;
+
+    [Header("UI References")]
     [SerializeField] private TextMeshProUGUI currentScoreText, finalScoreText;
     public void AddScore(int amount)
     {

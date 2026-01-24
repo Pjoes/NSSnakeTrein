@@ -2,7 +2,10 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
+    [Header("Collision")]
     [SerializeField] private string obstacleTag = "Obstacle";
+
+    [Header("Scoring")]
     [SerializeField] private int scoreToDeduct = 25;
 
     private void OnTriggerEnter(Collider other)
