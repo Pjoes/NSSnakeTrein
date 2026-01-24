@@ -1,0 +1,20 @@
+TODO as of 24/01/2026:
+- [ ] Add model for bandit
+- [ ] Add sound effects:
+  - [ ] Train move
+  - [ ] Bandit run
+  - [ ] Item pickup
+  - [ ] Passenger pickup
+  - [ ] Music
+  - [ ] Train crash
+  - [ ] Game over sfx
+- [ ] Main menu
+- [ ] Quit option
+- [ ] Highscore display
+- [ ] Fix car spacing
+- [ ] Visuals/particle effects:
+  - [ ] Train move (ground particles)
+  - [ ] Bandit run (ground particles)
+  - [ ] Item pickup (idk - concentric circles?)
+  - [ ] Passenger pickup (yellow cubes rising)
+- [ ] Day/night cycle (would be fun but not important)
