@@ -95,7 +95,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e900c3179dd5b4497c1c9b5baab2f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sizeMultiplier: 3
+  sizeMultiplier: 2
   pickupHitboxTag: PickupHitbox
 --- !u!1001 &8823086974629937362
 PrefabInstance:

@@ -30,10 +30,13 @@ public class TrainController : MonoBehaviour
     [Header("Hitboxes")]
     [SerializeField] private GameObject damageHitbox;
     [SerializeField] private GameObject pickupHitbox;
-    [SerializeField] private GameObject enlargedHitboxVisual;
 
-    [Header("Powerups")]
-    public GameObject armourVisual;
+    [Header("Powerup Visuals")]
+    [SerializeField] private List<PowerupVisual> powerupVisuals = new List<PowerupVisual>();
+    [SerializeField] private float uncoupleVisualDuration = 1.5f;
+    private bool shouldBeActive = true;
+
+    [Header("Health")]
     public int health = 1;
     public int maxHealth = 2;
     [SerializeField] private float damageInvulnerableDuration = 1f;
@@ -50,6 +53,9 @@ public class TrainController : MonoBehaviour
     private List<Vector3> positionsHistory = new List<Vector3>();
     private List<Quaternion> rotationHistory = new List<Quaternion>();
 
+    private readonly Dictionary<PowerupVisualType, GameObject> _powerupVisualLookup = new Dictionary<PowerupVisualType, GameObject>();
+    private readonly Dictionary<PowerupVisualType, Coroutine> _powerupVisualTimers = new Dictionary<PowerupVisualType, Coroutine>();
+
     private int scorePerPassenger = 25;
     private float hitboxEnlargedDuration = 10f;
     private Coroutine enlargeHitboxCoroutine = null;
@@ -59,9 +65,16 @@ public class TrainController : MonoBehaviour
     // Expose current move speed for other systems
     public float CurrentSpeed => moveSpeed;
 
+    private void Awake()
+    {
+        CachePowerupVisuals();
+    }
+
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+
+        InitializePowerupVisualStates();
 
         transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         _scoreManager = FindFirstObjectByType<ScoreManager>();
@@ -176,15 +189,7 @@ public class TrainController : MonoBehaviour
 
     private void ToggleArmourVisual()
     {
-
-        if (health > 1)
-        {
-            armourVisual.SetActive(true);
-        }
-        else
-        {
-            armourVisual.SetActive(false);
-        }
+        SetPowerupVisual(PowerupVisualType.Armour, health > 1);
     }
 
     // Display game over screen and pause the game
@@ -230,14 +235,21 @@ public class TrainController : MonoBehaviour
         StartCoroutine(BrakeAndRecover(brakeSpeed, recoveryDuration));
     }
 
-    // Uncouple last N cars from the traim
+    // Uncouple last N cars from the train
     public void RemoveLastCars(int count)
     {
+        bool removedAnyCars = false;
         for (int i = 0; i < count && cars.Count > 0; i++)
         {
             GameObject carToRemove = cars[cars.Count - 1];
             cars.RemoveAt(cars.Count - 1);
-            Destroy(carToRemove);
+            StartCoroutine(UncoupleCarDeletion(carToRemove));
+            removedAnyCars = true;
+        }
+
+        if (removedAnyCars)
+        {
+            SetPowerupVisual(PowerupVisualType.Uncouple, shouldBeActive, uncoupleVisualDuration);
         }
     }
 
@@ -289,20 +301,12 @@ public class TrainController : MonoBehaviour
 
         // Apply immediately
         collider.size = _pickupHitboxBaseSize * clampedMultiplier;
-
-        if (enlargedHitboxVisual != null)
-        {
-            enlargedHitboxVisual.SetActive(true);
-        }
+        SetPowerupVisual(PowerupVisualType.Magnet, shouldBeActive, hitboxEnlargedDuration);
 
         yield return new WaitForSeconds(hitboxEnlargedDuration);
 
         // Restore
         collider.size = _pickupHitboxBaseSize;
-        if (enlargedHitboxVisual != null)
-        {
-            enlargedHitboxVisual.SetActive(false);
-        }
 
         enlargeHitboxCoroutine = null;
     }
@@ -312,6 +316,8 @@ public class TrainController : MonoBehaviour
     {
         float originalSpeed = moveSpeed;
         moveSpeed = brakeSpeed;
+
+        SetPowerupVisual(PowerupVisualType.Brake, shouldBeActive, recoveryDuration);
 
         float elapsedTime = 0f;
         while (elapsedTime < recoveryDuration)
@@ -331,5 +337,92 @@ public class TrainController : MonoBehaviour
         _isDamageInvulnerable = true;
         yield return new WaitForSeconds(damageInvulnerableDuration);
         _isDamageInvulnerable = false;
+    }
+
+    // Destroy uncoupled cars after 1 second
+    private IEnumerator UncoupleCarDeletion(GameObject car)
+    {
+        if (car == null)
+            yield break;
+
+        yield return new WaitForSeconds(1f);
+
+        if (car != null)
+        {
+            Destroy(car);
+        }
+    }
+
+    private void CachePowerupVisuals()
+    {
+        _powerupVisualLookup.Clear();
+        foreach (PowerupVisual entry in powerupVisuals)
+        {
+            if (entry.visual == null)
+                continue;
+
+            // Ensure visual follows train transform
+            if (entry.visual.transform.parent != transform)
+            {
+                entry.visual.transform.SetParent(transform, true);
+            }
+
+            _powerupVisualLookup[entry.type] = entry.visual;
+        }
+    }
+
+    private void InitializePowerupVisualStates()
+    {
+        foreach (KeyValuePair<PowerupVisualType, GameObject> kvp in _powerupVisualLookup)
+        {
+            if (kvp.Value != null)
+            {
+                kvp.Value.SetActive(false);
+            }
+        }
+
+        _powerupVisualTimers.Clear();
+    }
+
+    private void SetPowerupVisual(PowerupVisualType type, bool isActive, float autoDisableAfterSeconds = -1f)
+    {
+        if (!_powerupVisualLookup.TryGetValue(type, out GameObject visual) || visual == null)
+            return;
+
+        if (_powerupVisualTimers.TryGetValue(type, out Coroutine timer) && timer != null)
+        {
+            StopCoroutine(timer);
+        }
+
+        visual.SetActive(isActive);
+        _powerupVisualTimers[type] = null;
+
+        if (isActive && autoDisableAfterSeconds > 0f)
+        {
+            _powerupVisualTimers[type] = StartCoroutine(DisableVisualAfterDelay(type, autoDisableAfterSeconds));
+        }
+    }
+
+    private IEnumerator DisableVisualAfterDelay(PowerupVisualType type, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SetPowerupVisual(type, false);
+    }
+
+    // Enum for powerup visual types
+    private enum PowerupVisualType
+    {
+        Armour,
+        Magnet,
+        Uncouple,
+        Brake
+    }
+
+    // Struct to link powerups with their visuals
+    [System.Serializable]
+    private struct PowerupVisual
+    {
+        public PowerupVisualType type;
+        public GameObject visual;
     }
 }

@@ -17,9 +17,9 @@ TODO as of 24/01/2026:
   - [ ] Bandit run (ground particles)
   - [ ] Item pickup (idk - concentric circles?)
   - [ ] Passenger pickup (yellow cubes rising)
-  - [ ] Visual for every item:
+  - [x] Visual for every item:
     - [x] Magnet
     - [x] Armour
-    - [ ] Uncouple
-    - [ ] Slow down
+    - [x] Uncouple
+    - [x] Slow down
 - [ ] Day/night cycle (would be fun but not important)
