@@ -55,6 +55,9 @@ public class EnemyController : MonoBehaviour
                 Vector3 delta = new Vector3(lungeDirection.x, 0f, lungeDirection.z) * step;
                 transform.position += delta;
 
+                // Face direction of movement
+                transform.LookAt(transform.position + new Vector3(lungeDirection.x, 0f, lungeDirection.z));
+
                 // Ensure enemy stops lunging if it goes too far
                 if (IsOutsideExpandedBounds(transform.position))
                 {
@@ -87,6 +90,7 @@ public class EnemyController : MonoBehaviour
         }
         lungeDirection = rawDir.normalized;
         lungeEndPoint = ComputeExitPoint(transform.position, lungeDirection);
+        transform.LookAt(lungeEndPoint);
         isLunging = true;
     }
 
