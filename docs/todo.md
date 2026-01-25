@@ -8,10 +8,10 @@ TODO as of 24/01/2026:
   - [ ] Music
   - [ ] Train crash
   - [ ] Game over sfx
-- [ ] Main menu
-- [ ] Quit option
+- [x] Main menu
+- [x] Quit option
 - [ ] Highscore display
-- [ ] Fix car spacing
+- [x] Fix car spacing
 - [ ] Visuals/particle effects:
   - [ ] Train move (ground particles)
   - [ ] Bandit run (ground particles)
