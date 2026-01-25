@@ -107,6 +107,7 @@ public class ObjectsSpawner : MonoBehaviour
         }
 
         Vector3 spawnPos = GetRandomPosition(enemySpawnY, SpawnMode.EdgesOnly);
+        Debug.Log("Spawned enemy at: " + spawnPos);
         return Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 

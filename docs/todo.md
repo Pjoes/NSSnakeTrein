@@ -10,7 +10,7 @@ TODO as of 24/01/2026:
   - [ ] Game over sfx
 - [x] Main menu
 - [x] Quit option
-- [ ] Highscore display
+- [x] Highscore display
 - [x] Fix car spacing
 - [ ] Visuals/particle effects:
   - [ ] Train move (ground particles)

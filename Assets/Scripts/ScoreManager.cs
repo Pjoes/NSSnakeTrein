@@ -7,12 +7,21 @@ public class ScoreManager : MonoBehaviour
     [Header("Score")]
     public int score;
     private int highScore;
+    private bool highScoreLoaded = false;
 
     [Header("Persistence")]
     [SerializeField] private string highScoreFileName = "highscore.txt";
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI currentScoreText, finalScoreText;
+
+    private void Start()
+    {
+        highScore = LoadHighScore();
+        highScoreLoaded = true;
+        UpdateCurrentScore();
+    }
+
     public void AddScore(int amount)
     {
         score += amount;
@@ -21,9 +30,24 @@ public class ScoreManager : MonoBehaviour
 
     public void UpdateCurrentScore()
     {
+        // Ensure high score is available before updating display
+        if (!highScoreLoaded)
+        {
+            highScore = LoadHighScore();
+            highScoreLoaded = true;
+        }
+
+        // Update high score immediately when surpassed
+        if (score > highScore)
+        {
+            highScore = score;
+            SaveHighScore(highScore);
+        }
+
+        // Display both score and highscore
         if (currentScoreText != null)
         {
-            currentScoreText.text = score.ToString();
+            currentScoreText.text = $"Score: {score}   Highscore: {highScore}";
         }
         else
         {
@@ -42,7 +66,7 @@ public class ScoreManager : MonoBehaviour
     {
         if (finalScoreText != null)
         {
-            finalScoreText.text = "Final Score: " + score;
+            finalScoreText.text = $"Final Score: {score}\nHigh Score: {highScore}";
             HideCurrentScore();
         }
         else
@@ -101,7 +125,7 @@ public class ScoreManager : MonoBehaviour
     private void CheckForDifficultyUpdate()
     {
         DifficultyManager difficultyManager = FindFirstObjectByType<DifficultyManager>();
-        if (difficultyManager != null)
+        if (difficultyManager != null && score != 0)
         {
             difficultyManager.IncreaseDifficulty(score);
         }
