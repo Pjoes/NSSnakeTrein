@@ -9,28 +9,20 @@ public class TrainController : MonoBehaviour
     [SerializeField] private float steerSpeed = 180f;
     [SerializeField] private float secondsToActivateDamageHitbox = 2f;
 
-    /* VALUES FOR TRAIN CARS AND SPAWNING
-    IN EDITOR/TESTING:
-    Gap = 75f
-    Maximum Gap Size = 75f
-    Minimum Gap Size = 30f
-    Gap Decrease Amount = 10f
-    First Car Gap = 50f
-
-    IN BUILD:
-    Gap = 150f
-    Maximum Gap Size = 150f
-    Minimum Gap Size = 60f
-    Gap Decrease Amount = 10f
-    First Car Gap = 75f
+    /* DEFAULT VALUES FOR TRAIN CARS AND SPAWNING
+    Gap = 30f
+    Maximum Gap Size = 30f
+    Minimum Gap Size = 20f
+    Gap Decrease Amount = 5f
+    First Car Gap = 15f
     */
 
     [Header("Car Spacing")]
-    [SerializeField] private float gap = 150f;
-    [SerializeField] private float gapDecreaseAmount = 10f;
-    [SerializeField] private float maximumGapSize = 150f;
-    [SerializeField] private float minimumGapSize = 60f;
-    [SerializeField] private float firstCarGap = 50f;
+    [SerializeField] private float gap = 30f;
+    [SerializeField] private float gapDecreaseAmount = 5f;
+    [SerializeField] private float maximumGapSize = 30f;
+    [SerializeField] private float minimumGapSize = 20f;
+    [SerializeField] private float firstCarGap = 15f;
     [SerializeField] private int initialCars = 3;
     private float trainCarY = 9f;
 
@@ -93,6 +85,9 @@ public class TrainController : MonoBehaviour
 
     private void Start()
     {
+        // Lock frame rate to 60 FPS for consistent behavior in editor and build
+        Application.targetFrameRate = 60;
+
         Cursor.lockState = CursorLockMode.Locked;
 
         InitializePowerupVisualStates();

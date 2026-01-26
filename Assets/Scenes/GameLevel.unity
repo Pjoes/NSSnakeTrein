@@ -3027,11 +3027,11 @@ MonoBehaviour:
   moveSpeed: 20
   steerSpeed: 180
   secondsToActivateDamageHitbox: 2
-  gap: 150
-  gapDecreaseAmount: 10
-  maximumGapSize: 150
-  minimumGapSize: 60
-  firstCarGap: 75
+  gap: 30
+  gapDecreaseAmount: 5
+  maximumGapSize: 30
+  minimumGapSize: 20
+  firstCarGap: 15
   initialCars: 2
   minX: -91
   maxX: 91
