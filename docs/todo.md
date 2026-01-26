@@ -1,13 +1,13 @@
 TODO as of 24/01/2026:
 - [x] Add model for bandit
-- [ ] Add sound effects:
-  - [ ] Train move
-  - [ ] Bandit run
-  - [ ] Item pickup
-  - [ ] Passenger pickup
+- [x] Add sound effects:
+  - [x] Train move
+  - [x] Bandit run
+  - [x] Item pickup
+  - [x] Passenger pickup
   - [ ] Music
-  - [ ] Train crash
-  - [ ] Game over sfx
+  - [x] Train crash
+  - [x] Game over sfx
 - [x] Main menu
 - [x] Quit option
 - [x] Highscore display

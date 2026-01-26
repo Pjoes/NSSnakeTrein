@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PickupHitbox : MonoBehaviour
 {
-    [SerializeField] private string passengersTag = "Passengers";
+    [SerializeField] private string passengersTag = "Passengers", powerupTag = "Powerup";
 
     private TrainController trainController;
     private float lastPickupTime = -1f;
@@ -22,6 +22,13 @@ public class PickupHitbox : MonoBehaviour
                 trainController.PickupPassenger(other.gameObject);
             }
             lastPickupTime = Time.time;
+        }
+        else if (other.gameObject.CompareTag(powerupTag))
+        {
+            if (trainController != null)
+            {
+                SoundManager.PlaySound(SoundType.ITEMPICKUP, 0.7f);
+            }
         }
     }
 }

@@ -21,6 +21,8 @@ public class EnemyController : MonoBehaviour
     private Vector3 lungeDirection;
     private Vector3 lungeEndPoint;
     private float cooldownTimer = 0f;
+    private float minimumMagnitude = 1e-4f;
+    private int totalAttackSounds = 2;
     private bool isLunging = false;
 
     private void Start()
@@ -83,7 +85,7 @@ public class EnemyController : MonoBehaviour
 
         Vector3 rawDir = predictedPosition - transform.position;
         rawDir.y = 0f;
-        if (rawDir.sqrMagnitude < 1e-4f)
+        if (rawDir.sqrMagnitude < minimumMagnitude)
         {
             // Fallback: use train forward projected to XZ
             Vector3 f = train.transform.forward; f.y = 0f; rawDir = f.sqrMagnitude > 1e-4f ? f : Vector3.forward;
@@ -91,6 +93,18 @@ public class EnemyController : MonoBehaviour
         lungeDirection = rawDir.normalized;
         lungeEndPoint = ComputeExitPoint(transform.position, lungeDirection);
         transform.LookAt(lungeEndPoint);
+
+        int soundToPlay = Random.Range(0, totalAttackSounds);
+        switch (soundToPlay)
+        {
+            case 0:
+                SoundManager.PlaySound(SoundType.ENEMYATTACK1, 0.7f);
+                break;
+            case 1:
+                SoundManager.PlaySound(SoundType.ENEMYATTACK2, 0.7f);
+                break;
+        }
+
         isLunging = true;
     }
 

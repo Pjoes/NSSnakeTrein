@@ -20,6 +20,7 @@ public class DamageHitbox : MonoBehaviour
             if (_trainController != null)
             {
                 _trainController.UpdateHealth(-damage);
+                SoundManager.PlaySound(SoundType.TRAINCRASH, 0.7f);
             }
         }
     }

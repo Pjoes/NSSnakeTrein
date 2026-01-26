@@ -44,6 +44,10 @@ public class TrainController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private GameObject gameOverScreen;
 
+    [Header("Sounds")]
+    [SerializeField] private float trainMoveSoundDuration = 0.975f;
+    private float trainMoveSoundTimer = 0f;
+
     private ScoreManager _scoreManager;
     private Vector3 _pickupHitboxBaseSize;
     private bool _pickupHitboxBaseSizeInitialized = false;
@@ -114,6 +118,14 @@ public class TrainController : MonoBehaviour
         // Ensure cars stop moving when the game is over
         if (isGameOver)
             return;
+
+        // Play train move sound at intervals
+        trainMoveSoundTimer -= Time.deltaTime;
+        if (trainMoveSoundTimer <= 0f)
+        {
+            SoundManager.PlaySound(SoundType.TRAINMOVE, 0.5f);
+            trainMoveSoundTimer = trainMoveSoundDuration;
+        }
 
         transform.position += transform.forward * moveSpeed * Time.deltaTime;
 
@@ -202,6 +214,8 @@ public class TrainController : MonoBehaviour
             _scoreManager.ManageFinalScore();
             gameOverScreen.SetActive(true);
 
+            SoundManager.PlaySound(SoundType.GAMEOVER, 1f);
+
             Cursor.lockState = CursorLockMode.None;
             Time.timeScale = 0f;
         }
@@ -211,6 +225,7 @@ public class TrainController : MonoBehaviour
     public void PickupPassenger(GameObject passengerObject)
     {
         GrowTrain();
+        SoundManager.PlaySound(SoundType.PASSENGERPICKUP, 0.5f);
         _scoreManager.AddScore(scorePerPassenger);
         Destroy(passengerObject);
 
@@ -408,6 +423,8 @@ public class TrainController : MonoBehaviour
         yield return new WaitForSeconds(delay);
         SetPowerupVisual(type, false);
     }
+
+
 
     // Enum for powerup visual types
     private enum PowerupVisualType
