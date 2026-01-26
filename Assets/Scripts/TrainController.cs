@@ -16,6 +16,7 @@ public class TrainController : MonoBehaviour
     [SerializeField] private float minimumGapSize = 30f;
     [SerializeField] private int firstCarGap = 20;
     [SerializeField] private int initialCars = 3;
+    private float trainCarY = 9f;
 
     [Header("Bounds")]
     [SerializeField] private float minX = -85;
@@ -144,6 +145,7 @@ public class TrainController : MonoBehaviour
             int historyIndex = CalculateHistoryIndex(index);
 
             Vector3 point = positionsHistory[historyIndex];
+            point.y = trainCarY;
             car.transform.position = point;
             car.transform.rotation = rotationHistory[historyIndex];
         }
