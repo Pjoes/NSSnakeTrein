@@ -112,7 +112,7 @@ public class TrainController : MonoBehaviour
         }
 
         // Simulate adding an initial car to fix the gap between the locomotive and the first car
-        int requiredHistoryLength = firstCarGap + Mathf.RoundToInt(initialCars * gap);
+        float requiredHistoryLength = firstCarGap + Mathf.RoundToInt(initialCars * gap);
         for (int i = 0; i < requiredHistoryLength; i++)
         {
             positionsHistory.Add(transform.position);
@@ -155,11 +155,11 @@ public class TrainController : MonoBehaviour
         rotationHistory.Insert(0, transform.rotation);
 
         // Trim history to prevent infinite growth
-        int maxHistoryLength = firstCarGap + Mathf.RoundToInt((cars.Count + 10) * gap);
+        float maxHistoryLength = firstCarGap + Mathf.RoundToInt((cars.Count + 10) * gap);
         if (positionsHistory.Count > maxHistoryLength)
         {
-            positionsHistory.RemoveRange(maxHistoryLength, positionsHistory.Count - maxHistoryLength);
-            rotationHistory.RemoveRange(maxHistoryLength, rotationHistory.Count - maxHistoryLength);
+            positionsHistory.RemoveRange((int)maxHistoryLength, positionsHistory.Count - (int)maxHistoryLength);
+            rotationHistory.RemoveRange((int)maxHistoryLength, rotationHistory.Count - (int)maxHistoryLength);
         }
 
         // Move cars
@@ -178,11 +178,11 @@ public class TrainController : MonoBehaviour
     // Adjust the gap for the first car
     private int CalculateHistoryIndex(int carIndex)
     {
-        int rawIndex = (carIndex == 0)
+        float rawIndex = (carIndex == 0)
             ? firstCarGap
             : firstCarGap + Mathf.RoundToInt(carIndex * gap);
 
-        return Mathf.Clamp(rawIndex, 0, positionsHistory.Count - 1);
+        return Mathf.Clamp((int)rawIndex, 0, positionsHistory.Count - 1);
     }
 
     // Increase train size by adding a new car to the end
