@@ -1,5 +1,6 @@
 TODO as of 24/01/2026:
 - [x] Add model for bandit
+- [ ] Add model for passengers
 - [x] Add sound effects:
   - [x] Train move
   - [x] Bandit run
