@@ -9,12 +9,28 @@ public class TrainController : MonoBehaviour
     [SerializeField] private float steerSpeed = 180f;
     [SerializeField] private float secondsToActivateDamageHitbox = 2f;
 
+    /* VALUES FOR TRAIN CARS AND SPAWNING
+    IN EDITOR/TESTING:
+    Gap = 75f
+    Maximum Gap Size = 75f
+    Minimum Gap Size = 30f
+    Gap Decrease Amount = 10f
+    First Car Gap = 50f
+
+    IN BUILD:
+    Gap = 150f
+    Maximum Gap Size = 150f
+    Minimum Gap Size = 60f
+    Gap Decrease Amount = 10f
+    First Car Gap = 75f
+    */
+
     [Header("Car Spacing")]
-    [SerializeField] private float gap = 75f;
-    [SerializeField] private float gapDecreaseAmount = 7.5f;
-    [SerializeField] private float maximumGapSize = 75f;
-    [SerializeField] private float minimumGapSize = 30f;
-    [SerializeField] private int firstCarGap = 20;
+    [SerializeField] private float gap = 150f;
+    [SerializeField] private float gapDecreaseAmount = 10f;
+    [SerializeField] private float maximumGapSize = 150f;
+    [SerializeField] private float minimumGapSize = 60f;
+    [SerializeField] private float firstCarGap = 50f;
     [SerializeField] private int initialCars = 3;
     private float trainCarY = 9f;
 
@@ -138,6 +154,14 @@ public class TrainController : MonoBehaviour
         positionsHistory.Insert(0, transform.position);
         rotationHistory.Insert(0, transform.rotation);
 
+        // Trim history to prevent infinite growth
+        int maxHistoryLength = firstCarGap + Mathf.RoundToInt((cars.Count + 10) * gap);
+        if (positionsHistory.Count > maxHistoryLength)
+        {
+            positionsHistory.RemoveRange(maxHistoryLength, positionsHistory.Count - maxHistoryLength);
+            rotationHistory.RemoveRange(maxHistoryLength, rotationHistory.Count - maxHistoryLength);
+        }
+
         // Move cars
         for (int index = 0; index < cars.Count; index++)
         {
@@ -179,12 +203,14 @@ public class TrainController : MonoBehaviour
     {
         moveSpeed += amount;
         gap -= gapDecreaseAmount;
-        Mathf.Clamp(gap, minimumGapSize, maximumGapSize);
+        gap = Mathf.Clamp(gap, minimumGapSize, maximumGapSize);
     }
 
     // Updates health and checks for game over
     public void UpdateHealth(int amount)
     {
+        Debug.Log($"[TrainController] UpdateHealth called: amount={amount}, current health={health}, invulnerable={_isDamageInvulnerable}");
+
         // Ignore consecutive hits during brief invulnerability window
         if (amount < 0 && _isDamageInvulnerable)
             return;
@@ -192,13 +218,20 @@ public class TrainController : MonoBehaviour
         health += amount;
         health = Mathf.Clamp(health, 0, maxHealth);
 
+        Debug.Log($"[TrainController] Health after change: {health}");
+
         if (amount < 0 && !_isDamageInvulnerable)
         {
             StartCoroutine(DamageInvulnerability());
         }
 
         ToggleArmourVisual();
-        GameOver();
+
+        if (health <= 0)
+        {
+            Debug.Log("[TrainController] Health <= 0, calling GameOver");
+            GameOver();
+        }
     }
 
     private void ToggleArmourVisual()
@@ -209,6 +242,8 @@ public class TrainController : MonoBehaviour
     // Display game over screen and pause the game
     private void GameOver()
     {
+        Debug.Log($"[TrainController] GameOver() called. isGameOver={isGameOver}, health={health}");
+
         if (health <= 0)
         {
             isGameOver = true;
@@ -220,6 +255,8 @@ public class TrainController : MonoBehaviour
 
             Cursor.lockState = CursorLockMode.None;
             Time.timeScale = 0f;
+
+            Debug.Log("[TrainController] Game Over complete");
         }
     }
 
@@ -296,15 +333,18 @@ public class TrainController : MonoBehaviour
         if (transform.position.x < minX || transform.position.x > maxX)
         {
             isOutOfBounds = true;
+            Debug.LogWarning($"[TrainController] OUT OF BOUNDS - X: {transform.position.x} (min={minX}, max={maxX})");
         }
 
         if (transform.position.z < minZ || transform.position.z > maxZ)
         {
             isOutOfBounds = true;
+            Debug.LogWarning($"[TrainController] OUT OF BOUNDS - Z: {transform.position.z} (min={minZ}, max={maxZ})");
         }
 
         if (isOutOfBounds)
         {
+            Debug.LogError($"[TrainController] Train went out of bounds! Position: {transform.position}. Setting health to 0.");
             health = 0;
             GameOver();
         }
