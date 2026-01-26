@@ -123,7 +123,7 @@ public class TrainController : MonoBehaviour
         trainMoveSoundTimer -= Time.deltaTime;
         if (trainMoveSoundTimer <= 0f)
         {
-            SoundManager.PlaySound(SoundType.TRAINMOVE, 0.5f);
+            SoundManager.PlaySound(SoundType.TRAINMOVE, 1f);
             trainMoveSoundTimer = trainMoveSoundDuration;
         }
 
